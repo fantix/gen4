@@ -193,7 +193,11 @@ def run(
 ):
     """Run Gen3 server."""
     import uvicorn
-    from .app import app
+
+    if reload:
+        app = "gen3.server.app:app"
+    else:
+        from .app import app
 
     kwargs = {
         "app": app,
