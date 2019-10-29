@@ -6,8 +6,15 @@ authors = ["Fantix King <fantix@uchicago.edu>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
+click = "^7.0"
 
 [tool.poetry.dev-dependencies]
+
+[tool.poetry.scripts]
+gen3 = 'gen3.cli:gen3'
+
+[tool.poetry.plugins."gen3.cli"]
+"server" = "gen3.server.cli"
 
 [build-system]
 requires = ["poetry>=0.12"]
