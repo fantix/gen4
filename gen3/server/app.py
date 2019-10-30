@@ -85,7 +85,29 @@ async def connection(pool=Depends(db_pool)):
         yield conn
 
 
+for ep in pkg_resources.iter_entry_points("gen3.server"):
+    ep.load()
+
+
 @app.get("/")
 async def read_root(conn=Depends(connection)):
     rv = await conn.fetchone("SELECT 'World'")
     return {"Hello": rv}
+
+
+@app.get("/migrate")
+async def migrate(conn=Depends(connection)):
+    schemas = []
+
+    for ep in pkg_resources.iter_entry_points("gen3.schema"):
+        schemas.append(ep.load())
+    eql = """\
+CREATE MIGRATION migs TO {
+%s
+};
+COMMIT MIGRATION migs;
+""" % "".join(
+        schemas
+    )
+    async with conn.transaction():
+        await conn.execute(eql)

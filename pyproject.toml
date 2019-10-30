@@ -23,6 +23,12 @@ gen3 = 'gen3.cli:gen3'
 [tool.poetry.plugins."gen3.cli"]
 "server" = "gen3.server.cli"
 
+[tool.poetry.plugins."gen3.schema"]
+"authn.user" = "gen3.authn.user:SCHEMA"
+
+[tool.poetry.plugins."gen3.server"]
+"authn.user" = "gen3.authn.user"
+
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
