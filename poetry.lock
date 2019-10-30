@@ -16,6 +16,14 @@ version = "1.16.0"
 
 [[package]]
 category = "main"
+description = "EdgeDB Python driver"
+name = "edgedb"
+optional = true
+python-versions = "*"
+version = "0.6.1"
+
+[[package]]
+category = "main"
 description = "A robust email syntax and deliverability validation library for Python 2.x/3.x."
 name = "email-validator"
 optional = true
@@ -112,15 +120,16 @@ python-versions = ">=3.6"
 version = "8.0.2"
 
 [extras]
-server = ["fastapi", "uvicorn", "email-validator"]
+server = ["fastapi", "uvicorn", "email-validator", "edgedb"]
 
 [metadata]
-content-hash = "5bea41ddb193dd1707f649d0dce035b6b3bf42749bcfee561b69a5e7e1db63e5"
+content-hash = "f7a86cc207e733d38de7f2ed7ac952fcbf158d0c0e98d221785408cf9bf9ad5d"
 python-versions = "^3.7"
 
 [metadata.hashes]
 click = ["2335065e6395b9e67ca716de5f7526736bfa6ceead690adf616d925bdc622b13", "5b94b49521f6456670fdb30cd82a4eca9412788a93fa6dd6df72c94d5a8ff2d7"]
 dnspython = ["36c5e8e38d4369a08b6780b7f27d790a292b2b08eea01607865bf0936c558e01", "f69c21288a962f4da86e56c4905b49d11aba7938d3d740e80d9e366ee4f1632d"]
+edgedb = ["239b9bda95dab3e93802529f7bfc72f930b642e834672c2b0145db624aadce3b", "3472856c2fece0a327f9415588b6c3ae094e2654382614e885f08a6e4f1714fc", "bde117e4ccb02dc8c8e3ea94b7cd7c45331bc1fad23308e5c6adbf82d014d959", "efb9073317f12a7c2e731740669e57590a525359d34417a532523611dfb29222"]
 email-validator = ["e3e6ede1765d7c1e580d2050d834b2689361f7da2d50ce74df6a5968fca7cb13"]
 fastapi = ["38356cf424392142a561f32ab49113dec6e2ab7318862ae14d5e1d7ede16d14f", "48cb522c1c993e238bfe272fbb18049cbd4bf5b9d6c0d4a4fa113cc790e8196c"]
 h11 = ["acca6a44cb52a32ab442b1779adf0875c443c689e9e028f8d831a3769f9c5208", "f2b1ca39bfed357d1f19ac732913d5f9faa54a5062eca7d2ec3a916cfb7ae4c7"]
