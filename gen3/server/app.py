@@ -1,5 +1,6 @@
 import asyncio
 
+import click
 import edgedb
 import pkg_resources
 from fastapi import FastAPI, Depends
@@ -36,6 +37,30 @@ class Pool(edgedb.AsyncIOPool):
                 [0 for con in self._holders if con._con and not con._con.is_closed()]
             ),
             use=len([0 for con in self._holders if con._in_use]),
+        )
+
+    @property
+    def colored_repr(self):
+        # noinspection PyProtectedMember
+        return "<{classname} max={max} min={min} cur={cur} use={use}>".format(
+            classname=click.style(self.__class__.__name__, fg="green"),
+            max=click.style(repr(self._maxsize), fg="cyan"),
+            min=click.style(repr(self._minsize), fg="cyan"),
+            cur=click.style(
+                repr(
+                    len(
+                        [
+                            0
+                            for con in self._holders
+                            if con._con and not con._con.is_closed()
+                        ]
+                    )
+                ),
+                fg="cyan",
+            ),
+            use=click.style(
+                repr(len([0 for con in self._holders if con._in_use])), fg="cyan"
+            ),
         )
 
 
@@ -84,9 +109,16 @@ async def create_db_pool():
         min_size=config.DB_MIN_SIZE,
         max_size=config.DB_MAX_SIZE,
     )
-    logger.critical(
-        "Creating database connection pool: %s",
-        ", ".join(f"{k}={v}" for k, v in args.items() if v is not None),
+    args_not_none = [(k, v) for k, v in args.items() if v is not None]
+    msg = "Creating database connection pool: "
+    logger.info(
+        msg + ", ".join(f"{k}={v}" for k, v in args.items() if v is not None),
+        extra={
+            "color_message": msg
+            + ", ".join(
+                f"{k}={click.style(repr(v), fg='cyan')}" for k, v in args_not_none
+            )
+        },
     )
     assert app.pool is not None
     pool = await Pool(
@@ -98,15 +130,18 @@ async def create_db_pool():
         connection_class=Connection,
     )
     app.pool.set_result(pool)
-    logger.critical("Database connection pool created: %s", pool)
+    msg = "Database connection pool created: "
+    logger.info(msg + repr(pool), extra={"color_message": msg + pool.colored_repr})
 
 
 @app.on_event("shutdown")
 async def close_db_pool():
     pool = await app.pool
-    logger.critical("Closing database connection pool: %s", pool)
+    msg = "Closing database connection pool: "
+    logger.info(msg + repr(pool), extra={"color_message": msg + pool.colored_repr})
     await pool.close()
-    logger.critical("Closed database connection pool: %s", pool)
+    msg = "Closed database connection pool: "
+    logger.info(msg + repr(pool), extra={"color_message": msg + pool.colored_repr})
 
 
 async def db_pool():
