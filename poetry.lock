@@ -48,6 +48,14 @@ starlette = "0.12.9"
 
 [[package]]
 category = "main"
+description = "Fast read/write of AVRO files"
+name = "fastavro"
+optional = true
+python-versions = "*"
+version = "0.22.5"
+
+[[package]]
+category = "main"
 description = "A pure-Python, bring-your-own-I/O implementation of HTTP/1.1"
 name = "h11"
 optional = true
@@ -81,6 +89,55 @@ version = "0.32.2"
 
 [[package]]
 category = "main"
+description = "Python SDK for PFB format"
+name = "pypfb"
+optional = true
+python-versions = "*"
+version = "0.2.0"
+
+[package.dependencies]
+PyYAML = ">=5.1,<6.0"
+click = ">=7.0,<8.0"
+fastavro = ">=0.21,<1.0"
+python-json-logger = ">=0.1,<1.0"
+
+[[package]]
+category = "main"
+description = "A python library adding a json log formatter"
+name = "python-json-logger"
+optional = true
+python-versions = ">=2.7"
+version = "0.1.11"
+
+[[package]]
+category = "main"
+description = "A streaming multipart parser for Python"
+name = "python-multipart"
+optional = true
+python-versions = "*"
+version = "0.0.5"
+
+[package.dependencies]
+six = ">=1.4.0"
+
+[[package]]
+category = "main"
+description = "YAML parser and emitter for Python"
+name = "pyyaml"
+optional = true
+python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+version = "5.1.2"
+
+[[package]]
+category = "main"
+description = "Python 2 and 3 compatibility utilities"
+name = "six"
+optional = true
+python-versions = ">=2.6, !=3.0.*, !=3.1.*"
+version = "1.12.0"
+
+[[package]]
+category = "main"
 description = "The little ASGI library that shines."
 name = "starlette"
 optional = true
@@ -93,7 +150,7 @@ description = "The lightning-fast ASGI server."
 name = "uvicorn"
 optional = true
 python-versions = "*"
-version = "0.10.0"
+version = "0.10.2"
 
 [package.dependencies]
 click = ">=7.0.0,<8.0.0"
@@ -120,10 +177,10 @@ python-versions = ">=3.6"
 version = "8.0.2"
 
 [extras]
-server = ["fastapi", "uvicorn", "email-validator", "edgedb"]
+server = ["fastapi", "uvicorn", "email-validator", "edgedb", "pypfb", "python-multipart"]
 
 [metadata]
-content-hash = "f7a86cc207e733d38de7f2ed7ac952fcbf158d0c0e98d221785408cf9bf9ad5d"
+content-hash = "a2e6b289e4316f320015150b2da69451cfeb132a8598977f2fae6af55281f818"
 python-versions = "^3.7"
 
 [metadata.hashes]
@@ -132,11 +189,17 @@ dnspython = ["36c5e8e38d4369a08b6780b7f27d790a292b2b08eea01607865bf0936c558e01",
 edgedb = ["239b9bda95dab3e93802529f7bfc72f930b642e834672c2b0145db624aadce3b", "3472856c2fece0a327f9415588b6c3ae094e2654382614e885f08a6e4f1714fc", "bde117e4ccb02dc8c8e3ea94b7cd7c45331bc1fad23308e5c6adbf82d014d959", "efb9073317f12a7c2e731740669e57590a525359d34417a532523611dfb29222"]
 email-validator = ["e3e6ede1765d7c1e580d2050d834b2689361f7da2d50ce74df6a5968fca7cb13"]
 fastapi = ["38356cf424392142a561f32ab49113dec6e2ab7318862ae14d5e1d7ede16d14f", "48cb522c1c993e238bfe272fbb18049cbd4bf5b9d6c0d4a4fa113cc790e8196c"]
+fastavro = ["1ad80ce952b29624011ea2cde191a3a1f60d79938d3726322d7cb6d6b9edfee3", "2986cbef684de1940548f083049100f80531ddacda4cf3f32d53f92ffa32b88f", "3b912c12a2aead83e33dbac05039beff8e7d5faaa9881f4c7ff60c4a33d26ab1", "552aa72b657ebde7ee79527936d49d58f7b0f6e47fa225d79ad848c64bef27da", "57684a5ac249eb435af0192d4f7900236095c82964832f6ba4d11485408f0781", "64c0f8c85dec719c595eb1188b85790af6a1c69d8482f536ef46fdeaeab1cd65", "6a53ce6673a892521b34de0455f7e12e89d671a6acd6cfd3d0c740d7ea249306", "79a067c3243d25f7459913e3bb3aad411e9a6d603c27b4dd7fec86c4445eff23", "94eaf42dbeba01f261897db18d6d8386aa4aeca63d7d7e0927c56e9718dc809a", "a8e4d19ac741f62129a96f12326bc85f4430a72626e3164e8177eea31e60c793", "aa7743b75c65a643047cb55c35bd292fe572fa7b9c35e9991fc38ae4efd1c7dd", "abc39183b7f0eedf36f49ad5b60bc451ac96c6514393a0ef4cded754f72550f4", "cd2a9e8d4c75f186c19ae9e2e895ee2c784cac101c7f6e5a33fe06bddd199af1", "d6b45665a9f99ae56186343aa69a318a07f964e8fc0d5bf73ed02bf395c017d6", "e67595b42120f018a086e8646dd89ab2ae2c37f7b07db35dbcc967932a769154", "e70ca8781e23cba8989800971d0843e4a9812bfdf999bff7d78fa45332e28b5c", "eed7ee9103a9d61265507321d781b7a8661041841bb972132a01fd2adab71545", "f7ccb202e71338600cdf2936d0293f4616bf34a79ccc089f186678de4f6574c7"]
 h11 = ["acca6a44cb52a32ab442b1779adf0875c443c689e9e028f8d831a3769f9c5208", "f2b1ca39bfed357d1f19ac732913d5f9faa54a5062eca7d2ec3a916cfb7ae4c7"]
 httptools = ["e00cbd7ba01ff748e494248183abc6e153f49181169d8a3d41bb49132ca01dfc"]
 idna = ["c357b3f628cf53ae2c4c05627ecc484553142ca23264e593d327bcde5e9c3407", "ea8b7f6188e6fa117537c3df7da9fc686d485087abf6ac197f9c46432f7e4a3c"]
 pydantic = ["18598557f0d9ab46173045910ed50458c4fb4d16153c23346b504d7a5b679f77", "6a9335c968e13295430a208487e74d69fef40168b72dea8d975765d14e2da660", "6f5eb88fe4c21380aa064b7d249763fc6306f0b001d7e7d52d80866d1afc9ed3", "bc6c6a78647d7a65a493e1107572d993f26a652c49183201e3c7d23924bf7311", "e1a63b4e6bf8820833cb6fa239ffbe8eec57ccdd7d66359eff20e68a83c1deeb", "ede2d65ae33788d4e26e12b330b4a32c53cb14131c65bca3a59f037c73f6ee7a"]
+pypfb = ["fc0632b3f87e62a0ec5ff70e35580cc596c1fff4d60b1c19b1c7e1a0204a0966"]
+python-json-logger = ["b7a31162f2a01965a5efb94453ce69230ed208468b0bbc7fdfc56e6d8df2e281"]
+python-multipart = ["f7bb5f611fc600d15fa47b3974c8aa16e93724513b49b5f95c81e6624c83fa43"]
+pyyaml = ["0113bc0ec2ad727182326b61326afa3d1d8280ae1122493553fd6f4397f33df9", "01adf0b6c6f61bd11af6e10ca52b7d4057dd0be0343eb9283c878cf3af56aee4", "5124373960b0b3f4aa7df1707e63e9f109b5263eca5976c66e08b1c552d4eaf8", "5ca4f10adbddae56d824b2c09668e91219bb178a1eee1faa56af6f99f11bf696", "7907be34ffa3c5a32b60b95f4d95ea25361c951383a894fec31be7252b2b6f34", "7ec9b2a4ed5cad025c2278a1e6a19c011c80a3caaac804fd2d329e9cc2c287c9", "87ae4c829bb25b9fe99cf71fbb2140c448f534e24c998cc60f39ae4f94396a73", "9de9919becc9cc2ff03637872a440195ac4241c80536632fffeb6a1e25a74299", "a5a85b10e450c66b49f98846937e8cfca1db3127a9d5d1e31ca45c3d0bef4c5b", "b0997827b4f6a7c286c01c5f60384d218dca4ed7d9efa945c3e1aa623d5709ae", "b631ef96d3222e62861443cc89d6563ba3eeb816eeb96b2629345ab795e53681", "bf47c0607522fdbca6c9e817a6e81b08491de50f3766a7a0e6a5be7905961b41", "f81025eddd0327c7d4cfe9b62cf33190e1e736cc6e97502b3ec425f574b3e7a8"]
+six = ["3350809f0555b11f552448330d0b52d5f24c91a322ea4a15ef22629740f3761c", "d16a0141ec1a18405cd4ce8b4613101da75da0e9a7aec5bdd4fa804d0e0eba73"]
 starlette = ["c2ac9a42e0e0328ad20fe444115ac5e3760c1ee2ac1ff8cdb5ec915c4a453411"]
-uvicorn = ["ec3533a8d0aa9ebf941a4edd4735d91e10925e6825dd6e86d6163ac4e5b42835"]
+uvicorn = ["b8fe2f23016108ad84c52d0e0666c14ad803c8d2aa6b5289841e19282aba185b"]
 uvloop = ["117357af2b79d9183675adace1e1e1b3400be81fdd54cdc8feb6a54724f099ca", "2cffc419a627bc71285d9481c869228a84f56358e54b1f683bc1d4be19b66651", "426074b9f5ee5865fcf0818252c16e72446e97578349d8b58ae3a666dacd8e38", "61b898682e3dc3673216f1c6678013d8f758304013d897f56d8bdc1d4ffe04e3", "667463aa2a2f6ed0a51a631f204a1ae9c71c8e49e2d8d82b3b9bf32833a7de83", "7d557bf49991e3f2b70298b117fc09791eba0115af2198a5a385eab85c776130", "aa10c0246425d8e7f494c639473427a35831222af5a2b0cb59eab251715a0d09", "b5c5a51b09ef6e787faadb5bcbd88d117c5136a162c40629a0d98707ae05dc6b", "c0f69bc2e750b5370010c48c9825c6785487d60fa26025df6206f33b5027fc56"]
 websockets = ["049e694abe33f8a1d99969fee7bfc0ae6761f7fd5f297c58ea933b27dd6805f2", "73ce69217e4655783ec72ce11c151053fcbd5b837cc39de7999e19605182e28a", "83e63aa73331b9ca21af61df8f115fb5fbcba3f281bee650a4ad16a40cd1ef15", "882a7266fa867a2ebb2c0baaa0f9159cabf131cf18c1b4270d79ad42f9208dc5", "8c77f7d182a6ea2a9d09c2612059f3ad859a90243e899617137ee3f6b7f2b584", "8d7a20a2f97f1e98c765651d9fb9437201a9ccc2c70e94b0270f1c5ef29667a3", "a7affaeffbc5d55681934c16bb6b8fc82bb75b175e7fd4dcca798c938bde8dda", "c82e286555f839846ef4f0fdd6910769a577952e1e26aa8ee7a6f45f040e3c2b", "e906128532a14b9d264a43eb48f9b3080d53a9bda819ab45bf56b8039dc606ac", "e9102043a81cdc8b7c8032ff4bce39f6229e4ac39cb2010946c912eeb84e2cb6", "f5cb2683367e32da6a256b60929a3af9c29c212b5091cf5bace9358d03011bf5"]
