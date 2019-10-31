@@ -1,7 +1,10 @@
 [tool.poetry]
 name = "gen3"
 version = "3.1.0"
-description = "Gen3 3.1"
+description = "Gen3 Data Commons."
+license = "Apache-2.0"
+homepage = "https://gen3.org/"
+repository = "https://github.com/uc-cdis/gen3"
 authors = ["Fantix King <fantix@uchicago.edu>"]
 
 [tool.poetry.dependencies]
