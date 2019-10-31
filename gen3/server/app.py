@@ -39,6 +39,39 @@ class Pool(edgedb.AsyncIOPool):
         )
 
 
+class Connection(edgedb.asyncio_con.AsyncIOConnection):
+    def transaction(self, *, isolation=None, readonly=None, deferrable=None):
+        return Transaction(self, isolation, readonly, deferrable)
+
+
+class _Commit(BaseException):
+    pass
+
+
+class _Rollback(BaseException):
+    pass
+
+
+class Transaction(edgedb.transaction.AsyncIOTransaction):
+    async def __aenter__(self):
+        await super().__aenter__()
+        return self
+
+    async def __aexit__(self, extype, ex, tb):
+        if extype is not None and extype is not _Commit:
+            await super().__aexit__(extype, ex, tb)
+            if extype is _Rollback:
+                return True
+        else:
+            await super().__aexit__(None, None, None)
+
+    def raise_commit(self):
+        raise _Commit()
+
+    def raise_rollback(self):
+        raise _Rollback()
+
+
 @app.on_event("startup")
 async def create_db_pool():
     args = dict(
@@ -62,7 +95,7 @@ async def create_db_pool():
         on_acquire=None,
         on_connect=None,
         on_release=None,
-        connection_class=edgedb.asyncio_con.AsyncIOConnection,
+        connection_class=Connection,
     )
     app.pool.set_result(pool)
     logger.critical("Database connection pool created: %s", pool)
