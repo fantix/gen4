@@ -2,11 +2,13 @@ import json
 
 import edgedb
 import pkg_resources
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel, Schema
 from starlette.requests import Request
+from starlette.responses import Response
 from starlette.status import (
     HTTP_201_CREATED,
+    HTTP_204_NO_CONTENT,
     HTTP_404_NOT_FOUND,
     HTTP_422_UNPROCESSABLE_ENTITY,
 )
@@ -56,6 +58,15 @@ class Bucket(BaseModel):
                 rv["settings"] = json.dumps(rv["settings"])
         return rv
 
+    async def get(self, path, recursive=True):  # pragma: no cover
+        raise NotImplementedError
+
+    async def put(self, path, file):  # pragma: no cover
+        raise NotImplementedError
+
+    async def delete(self, path):  # pragma: no cover
+        raise NotImplementedError
+
 
 @app.get("/objects/buckets")
 async def list_buckets(request: Request, conn=Depends(connection("objects"))):
@@ -90,21 +101,22 @@ async def create_bucket(
     )
 
 
-@app.get("/objects/buckets/{bucket_name}")
-async def get_bucket(
-    bucket_name: str, request: Request, conn=Depends(connection("objects"))
-):
+async def _get_bucket(bucket_name: str, conn=Depends(connection("objects"))):
     bucket = await conn.fetchall(
         "SELECT Bucket {name, provider, enabled, settings} FILTER .name = <str>$name",
         name=bucket_name,
     )
     if bucket:
-        return dict(
-            Bucket.parse_obj(bucket[0]).dict(),
-            href=request.url_for("get_bucket", bucket_name=bucket_name),
-        )
+        yield Bucket.parse_obj(bucket[0])
     else:
         raise HTTPException(HTTP_404_NOT_FOUND, f"bucket {bucket_name} not found")
+
+
+@app.get("/objects/buckets/{bucket_name}")
+async def get_bucket(request: Request, bucket=Depends(_get_bucket)):
+    return dict(
+        bucket.dict(), href=request.url_for("get_bucket", bucket_name=bucket.name)
+    )
 
 
 class UpdateBucket(BaseModel):
@@ -158,11 +170,33 @@ async def delete_bucket(
         raise HTTPException(HTTP_404_NOT_FOUND, f"bucket {bucket_name} not found")
 
 
+@app.get("/objects/buckets/{bucket_name}/{path:path}")
+async def get_bucket_path(
+    path: str = None, bucket=Depends(_get_bucket), recursive: bool = True
+):
+    return await bucket.get(path, recursive=recursive)
+
+
+@app.put("/objects/buckets/{bucket_name}/{path:path}")
+async def put_bucket_path(
+    path: str = None, bucket=Depends(_get_bucket), file: UploadFile = File(...)
+):
+    return await bucket.put(path, file)
+
+
+@app.delete(
+    "/objects/buckets/{bucket_name}/{path:path}", status_code=HTTP_204_NO_CONTENT
+)
+async def delete_bucket_path(path: str = None, bucket=Depends(_get_bucket)):
+    await bucket.delete(path)
+    return Response(status_code=HTTP_204_NO_CONTENT)
+
+
 def load_extras():
     for ep in pkg_resources.iter_entry_points("gen3.objects.providers"):
         try:
             provider = ep.load()
-        except pkg_resources.DistributionNotFound:
+        except pkg_resources.DistributionNotFound:  # pragma: no cover
             pass
         else:
             installed_providers[ep.name] = provider
