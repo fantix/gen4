@@ -14,6 +14,7 @@ class Application(FastAPI):
         super().__init__(
             title="Gen3 Data Commons",
             version=pkg_resources.get_distribution("gen3").version,
+            debug=config.DEBUG,
         )
         self._pool = None
 
@@ -22,6 +23,12 @@ class Application(FastAPI):
         if self._pool is None:
             self._pool = asyncio.Future()
         return self._pool
+
+    def pop_pool(self):
+        try:
+            return self._pool
+        finally:
+            self._pool = None
 
 
 app = Application()
@@ -137,7 +144,7 @@ async def create_db_pool():
 
 @app.on_event("shutdown")
 async def close_db_pool():
-    pool = await app.pool
+    pool = await app.pop_pool()
     msg = "Closing database connection pool: "
     logger.info(msg + repr(pool), extra={"color_message": msg + pool.colored_repr})
     await pool.close()
