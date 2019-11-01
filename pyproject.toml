@@ -19,6 +19,7 @@ python-multipart = {version = "^0.0.5", optional = true}
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
+pytest-cov = "^2.8"
 
 [tool.poetry.extras]
 server = ["fastapi", "uvicorn", "email-validator", "edgedb", "pypfb", "python-multipart"]

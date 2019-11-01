@@ -28,3 +28,9 @@ gen3 run --reload
 ```
 
 Try out the OpenAPI documentation at: http://localhost:8000/docs.
+
+To run tests:
+
+```bash
+pytest --cov=gen3
+```
