@@ -1,0 +1,39 @@
+name: pytest
+
+on: [push]
+
+jobs:
+  test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Setup EdgeDB
+      uses: fantix/edgedb-action@v1
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    - uses: actions/cache@preview
+      with:
+        path: ~/.cache/pypoetry/virtualenvs
+        key: ${{ runner.os }}-poetry-${{ hashFiles(format('{0}{1}', github.workspace, '/poetry.lock')) }}
+        restore-keys: |
+          ${{ runner.os }}-poetry-
+    - name: Install dependencies
+      run: |
+        curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
+        $HOME/.poetry/bin/poetry install -E server
+    - name: Test with pytest
+      env:
+        DB_USER: edgedb
+        DB_DATABASE: edgedb
+      run: |
+        $HOME/.poetry/bin/poetry run pytest --cov=gen3 --cov-report xml
+    - name: Submit coverage report
+      env:
+        CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_TOKEN }}
+      run: |
+        pip install codacy-coverage
+        python-codacy-coverage -r coverage.xml

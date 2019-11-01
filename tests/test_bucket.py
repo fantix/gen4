@@ -106,10 +106,9 @@ def test_fs(client, tmpdir):
             "/objects/buckets/tBcfs/abc/upload.txt", files=dict(file=f)
         ).json()["size"] == len(data)
     assert client.get("/objects/buckets/tBcfs/abc/upload.txt").text == data
-    assert client.get("/objects/buckets/tBcfs/abc").json() == [
-        "abc/test.txt",
-        "abc/upload.txt",
-    ]
+    assert sorted(client.get("/objects/buckets/tBcfs/abc").json()) == sorted(
+        ["abc/test.txt", "abc/upload.txt"]
+    )
 
     assert client.delete("/objects/buckets/tBcfs/abc").status_code == 204
     assert client.get("/objects/buckets/tBcfs/abc").status_code == 404
