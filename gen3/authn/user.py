@@ -3,9 +3,9 @@ from fastapi import Depends
 from ..server.app import app, connection
 
 SCHEMA = """\
-type User {
-    required property username -> str;
-}
+    type User {
+        required property username -> str;
+    }
 """
 
 

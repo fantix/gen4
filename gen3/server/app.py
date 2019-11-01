@@ -196,14 +196,17 @@ async def migrate(conn=Depends(connection)):
                 schemas.append(ep.load())
     eql = """\
 CREATE MIGRATION migs TO {
-%s
-};
-COMMIT MIGRATION migs;
-""" % "".join(
+%s}""" % "".join(
         schemas
     )
-    async with conn.transaction():
+    logger.critical("Migrating default schema to:\n" + eql)
+    async with conn.transaction() as tx:
         await conn.execute(eql)
+        try:
+            await conn.execute("COMMIT MIGRATION migs;")
+        except edgedb.errors.InternalServerError:
+            # bug in EdgeDB
+            tx.raise_rollback()
 
 
 load_extras()
