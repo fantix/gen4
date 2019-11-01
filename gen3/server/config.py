@@ -1,5 +1,5 @@
 from starlette.config import Config
-from starlette.datastructures import Secret
+from starlette.datastructures import Secret, CommaSeparatedStrings
 
 config = Config(".env")
 
@@ -12,3 +12,9 @@ DB_DATABASE = config("DB_DATABASE", default=None)
 DB_CONNECT_TIMEOUT = config("DB_CONNECT_TIMEOUT", cast=int, default=60)
 DB_MIN_SIZE = config("DB_MIN_SIZE", cast=int, default=1)
 DB_MAX_SIZE = config("DB_MAX_SIZE", cast=int, default=10)
+
+SERVER_ENABLED_MODULES = config(
+    "SERVER_ENABLED_MODULES",
+    cast=CommaSeparatedStrings,
+    default=["submission", "authn"],
+)

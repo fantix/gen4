@@ -153,8 +153,31 @@ async def connection(pool=Depends(db_pool)):
         yield conn
 
 
-for ep in pkg_resources.iter_entry_points("gen3.server"):
-    ep.load()
+def load_extras():
+    msg = "Start to load extra modules, enabled prefixes: "
+    logger.info(
+        msg + "%s",
+        ", ".join(config.SERVER_ENABLED_MODULES),
+        extra={"color_message": msg + click.style("%s", fg="cyan")},
+    )
+    for ep in pkg_resources.iter_entry_points("gen3.server"):
+        for mod in config.SERVER_ENABLED_MODULES:
+            if ep.name.startswith(mod):
+                ep.load()
+                msg = "Loaded module: "
+                logger.info(
+                    msg + "%s",
+                    ep.name,
+                    extra={"color_message": msg + click.style("%s", fg="cyan")},
+                )
+                break
+        else:
+            msg = "Skipped module: "
+            logger.info(
+                msg + "%s",
+                ep.name,
+                extra={"color_message": msg + click.style("%s", fg="yellow")},
+            )
 
 
 @app.get("/")
@@ -168,7 +191,9 @@ async def migrate(conn=Depends(connection)):
     schemas = []
 
     for ep in pkg_resources.iter_entry_points("gen3.schema"):
-        schemas.append(ep.load())
+        for mod in config.SERVER_ENABLED_MODULES:
+            if ep.name.startswith(mod):
+                schemas.append(ep.load())
     eql = """\
 CREATE MIGRATION migs TO {
 %s
@@ -179,3 +204,6 @@ COMMIT MIGRATION migs;
     )
     async with conn.transaction():
         await conn.execute(eql)
+
+
+load_extras()
