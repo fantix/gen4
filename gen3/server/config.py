@@ -16,5 +16,5 @@ DB_MAX_SIZE = config("DB_MAX_SIZE", cast=int, default=10)
 SERVER_ENABLED_MODULES = config(
     "SERVER_ENABLED_MODULES",
     cast=CommaSeparatedStrings,
-    default=["submission", "authn"],
+    default=["submission", "auth", "objects"],
 )

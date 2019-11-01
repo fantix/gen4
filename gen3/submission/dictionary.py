@@ -9,6 +9,7 @@ from starlette.responses import Response
 
 from ..server import logger
 from ..server.app import app, connection
+from ..utils import ensure_module
 
 _TYPES = {"string": "str", "boolean": "bool", "float": "float64", "long": "int64"}
 _ESCAPE = {"Case": "Case_"}
@@ -21,7 +22,7 @@ def _make_node_name(name):
 
 @app.post("/submissions/{schema}/schema")
 async def update_schema(
-    conn=Depends(connection),
+    conn=Depends(connection()),
     schema: str = Path(..., regex="^[a-zA-Z_][a-zA-Z0-9_]*$"),
     file: UploadFile = File(...),
 ):
@@ -106,11 +107,7 @@ async def update_schema(
 
     logger.critical("Migrating schema of %s to:\n%s", schema, migration_eql.getvalue())
     async with conn.transaction() as tx:
-        if not await conn.fetchall(
-            f"SELECT name := schema::Module.name FILTER name = <str>$schema",
-            schema=schema,
-        ):
-            await conn.execute(f"CREATE MODULE {schema}")
+        await ensure_module(conn, schema)
         await conn.execute(migration_eql.getvalue())
         try:
             await conn.fetchall(f"COMMIT MIGRATION {schema}::mig")
@@ -128,7 +125,7 @@ class Query(BaseModel):
 @app.post("/submissions/{schema}/edgeql")
 async def query_edgeql(
     query: Query,
-    conn=Depends(connection),
+    conn=Depends(connection()),
     schema: str = Path(..., regex="^[a-zA-Z_][a-zA-Z0-9_]*$"),
 ):
     schema = "gen3_" + schema

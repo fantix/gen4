@@ -6,6 +6,7 @@ import pkg_resources
 from fastapi import FastAPI, Depends
 
 from . import logger, config
+from ..utils import ensure_module
 
 
 class Application(FastAPI):
@@ -148,9 +149,18 @@ async def db_pool():
     yield await app.pool
 
 
-async def connection(pool=Depends(db_pool)):
-    async with pool.acquire() as conn:
-        yield conn
+def connection(module=None):
+    async def _connection(pool=Depends(db_pool)):
+        async with pool.acquire() as conn:
+            if module is not None:
+                await conn.execute(f"SET MODULE {module}")
+            try:
+                yield conn
+            finally:
+                if module is not None:
+                    await conn.execute("RESET MODULE")
+
+    return _connection
 
 
 def load_extras():
@@ -181,32 +191,41 @@ def load_extras():
 
 
 @app.get("/")
-async def read_root(conn=Depends(connection)):
+async def read_root(conn=Depends(connection())):
     rv = await conn.fetchone("SELECT 'World'")
     return {"Hello": rv}
 
 
 @app.get("/migrate")
-async def migrate(conn=Depends(connection)):
-    schemas = []
+async def migrate(conn=Depends(connection())):
+    schemas = {}
 
     for ep in pkg_resources.iter_entry_points("gen3.schema"):
         for mod in config.SERVER_ENABLED_MODULES:
             if ep.name.startswith(mod):
-                schemas.append(ep.load())
-    eql = """\
-CREATE MIGRATION migs TO {
-%s}""" % "".join(
-        schemas
-    )
-    logger.critical("Migrating default schema to:\n" + eql)
-    async with conn.transaction() as tx:
-        await conn.execute(eql)
-        try:
-            await conn.execute("COMMIT MIGRATION migs;")
-        except edgedb.errors.InternalServerError:
-            # bug in EdgeDB
-            tx.raise_rollback()
+                schemas.setdefault(mod, []).append(ep.load())
+    for module, sdls in schemas.items():
+        async with conn.transaction() as tx:
+            await ensure_module(conn, module)
+            eql = f"""\
+CREATE MIGRATION {module}::migs TO {{
+{''.join(sdls)}}}"""
+            logger.critical(
+                "Migrating %s schema to:\n%s",
+                module,
+                eql,
+                extra={
+                    "color_message": "Migrating "
+                    + click.style("%s", fg="cyan")
+                    + " schema to:\n%s"
+                },
+            )
+            await conn.execute(eql)
+            try:
+                await conn.execute(f"COMMIT MIGRATION {module}::migs;")
+            except edgedb.errors.InternalServerError:
+                # bug in EdgeDB
+                tx.raise_rollback()
 
 
 load_extras()

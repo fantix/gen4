@@ -10,6 +10,6 @@ SCHEMA = """\
 
 
 @app.get("/user")
-async def get_current_user(conn=Depends(connection)):
+async def get_current_user(conn=Depends(connection("auth"))):
     async with conn.transaction():
-        pass
+        return await conn.fetchall("SELECT User { username }")

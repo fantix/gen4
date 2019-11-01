@@ -29,10 +29,10 @@ server = ["fastapi", "uvicorn", "email-validator", "edgedb", "pypfb", "python-mu
 "server" = "gen3.server.cli [server]"
 
 [tool.poetry.plugins."gen3.schema"]
-"authn.user" = "gen3.authn.user:SCHEMA"
+"auth.user" = "gen3.auth.user:SCHEMA"
 
 [tool.poetry.plugins."gen3.server"]
-"authn.user" = "gen3.authn.user"
+"auth.user" = "gen3.auth.user"
 "submission.dict" = "gen3.submission.dictionary"
 
 [build-system]
