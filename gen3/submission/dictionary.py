@@ -1,8 +1,11 @@
 import io
+from typing import Dict
 
 import edgedb
-from fastapi import Depends, Path, UploadFile, File
+from fastapi import Depends, Path, UploadFile, File, HTTPException
 from pfb.reader import PFBReader
+from pydantic import BaseModel
+from starlette.responses import Response
 
 from ..server import logger
 from ..server.app import app, connection
@@ -115,3 +118,27 @@ async def update_schema(
             # bug in EdgeDB
             tx.raise_rollback()
     return schema
+
+
+class Query(BaseModel):
+    query: str
+    args: Dict[str, str] = {}
+
+
+@app.post("/submissions/{schema}/edgeql")
+async def query_edgeql(
+    query: Query,
+    conn=Depends(connection),
+    schema: str = Path(..., regex="^[a-zA-Z_][a-zA-Z0-9_]*$"),
+):
+    schema = "gen3_" + schema
+    await conn.execute(f"SET MODULE {schema}")
+    try:
+        return Response(
+            await conn.fetchall_json(query.query, **query.args),
+            media_type="application/json",
+        )
+    except edgedb.errors.QueryError as e:
+        raise HTTPException(400, str(e))
+    finally:
+        await conn.execute("RESET MODULE")
