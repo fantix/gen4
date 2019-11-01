@@ -8,9 +8,10 @@ from pydantic import BaseModel
 from starlette.responses import Response
 from starlette.status import HTTP_400_BAD_REQUEST
 
+from .server import mod
 from ..server import logger
-from ..server.app import app, connection
-from ..utils import ensure_module, ID_REGEX
+from ..server.app import connection
+from ..server.utils import ensure_module, ID_REGEX
 
 _TYPES = {"string": "str", "boolean": "bool", "float": "float64", "long": "int64"}
 _ESCAPE = {"Case": "Case_"}
@@ -21,7 +22,7 @@ def _make_node_name(name):
     return _ESCAPE.get(rv, rv)
 
 
-@app.post("/submissions/{schema}/schema")
+@mod.post("/{schema}/schema")
 async def update_schema(
     conn=Depends(connection()),
     schema: str = Path(..., regex=ID_REGEX),
@@ -123,7 +124,7 @@ class Query(BaseModel):
     args: Dict[str, str] = {}
 
 
-@app.post("/submissions/{schema}/edgeql")
+@mod.post("/{schema}/edgeql")
 async def query_edgeql(
     query: Query,
     conn=Depends(connection()),

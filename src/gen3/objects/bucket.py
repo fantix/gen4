@@ -13,8 +13,9 @@ from starlette.status import (
     HTTP_422_UNPROCESSABLE_ENTITY,
 )
 
-from ..server.app import app, connection
-from ..utils import ID_REGEX
+from .server import mod
+from ..server.app import connection
+from ..server.utils import ID_REGEX
 
 SCHEMA = """\
     type Bucket {
@@ -68,7 +69,7 @@ class Bucket(BaseModel):
         raise NotImplementedError
 
 
-@app.get("/objects/buckets")
+@mod.get("/buckets")
 async def list_buckets(request: Request, conn=Depends(connection("objects"))):
     rv = [
         dict(
@@ -81,7 +82,7 @@ async def list_buckets(request: Request, conn=Depends(connection("objects"))):
     return rv
 
 
-@app.post("/objects/buckets", status_code=HTTP_201_CREATED)
+@mod.post("/buckets", status_code=HTTP_201_CREATED)
 async def create_bucket(
     bucket: Bucket, request: Request, conn=Depends(connection("objects"))
 ):
@@ -112,7 +113,7 @@ async def _get_bucket(bucket_name: str, conn=Depends(connection("objects"))):
         raise HTTPException(HTTP_404_NOT_FOUND, f"bucket {bucket_name} not found")
 
 
-@app.get("/objects/buckets/{bucket_name}")
+@mod.get("/buckets/{bucket_name}")
 async def get_bucket(request: Request, bucket=Depends(_get_bucket)):
     return dict(
         bucket.dict(), href=request.url_for("get_bucket", bucket_name=bucket.name)
@@ -124,7 +125,7 @@ class UpdateBucket(BaseModel):
     enabled: bool = None
 
 
-@app.put("/objects/buckets/{bucket_name}")
+@mod.put("/buckets/{bucket_name}")
 async def update_bucket(
     bucket_name: str,
     bucket: UpdateBucket,
@@ -154,7 +155,7 @@ async def update_bucket(
         raise HTTPException(HTTP_404_NOT_FOUND, f"bucket {bucket_name} not found")
 
 
-@app.delete("/objects/buckets/{bucket_name}")
+@mod.delete("/buckets/{bucket_name}")
 async def delete_bucket(
     bucket_name: str, request: Request, conn=Depends(connection("objects"))
 ):
@@ -170,23 +171,21 @@ async def delete_bucket(
         raise HTTPException(HTTP_404_NOT_FOUND, f"bucket {bucket_name} not found")
 
 
-@app.get("/objects/buckets/{bucket_name}/{path:path}")
+@mod.get("/buckets/{bucket_name}/{path:path}")
 async def get_bucket_path(
     path: str = None, bucket=Depends(_get_bucket), recursive: bool = True
 ):
     return await bucket.get(path, recursive=recursive)
 
 
-@app.put("/objects/buckets/{bucket_name}/{path:path}")
+@mod.put("/buckets/{bucket_name}/{path:path}")
 async def put_bucket_path(
     path: str = None, bucket=Depends(_get_bucket), file: UploadFile = File(...)
 ):
     return await bucket.put(path, file)
 
 
-@app.delete(
-    "/objects/buckets/{bucket_name}/{path:path}", status_code=HTTP_204_NO_CONTENT
-)
+@mod.delete("/buckets/{bucket_name}/{path:path}", status_code=HTTP_204_NO_CONTENT)
 async def delete_bucket_path(path: str = None, bucket=Depends(_get_bucket)):
     await bucket.delete(path)
     return Response(status_code=HTTP_204_NO_CONTENT)

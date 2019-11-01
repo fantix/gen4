@@ -6,7 +6,7 @@ import pkg_resources
 from fastapi import FastAPI, Depends
 
 from . import logger, config
-from ..utils import ensure_module
+from .utils import ensure_module
 
 
 class Application(FastAPI):
@@ -171,23 +171,24 @@ def connection(module=None):
 
 
 def load_extras():
-    msg = "Start to load extra modules, enabled prefixes: "
+    msg = "Start to load extra modules, enabled modules: "
     logger.info(
         msg + "%s",
         ", ".join(config.SERVER_ENABLED_MODULES),
         extra={"color_message": msg + click.style("%s", fg="cyan")},
     )
     for ep in pkg_resources.iter_entry_points("gen3.server"):
-        for mod in config.SERVER_ENABLED_MODULES:
-            if ep.name.startswith(mod):
-                ep.load()
-                msg = "Loaded module: "
-                logger.info(
-                    msg + "%s",
-                    ep.name,
-                    extra={"color_message": msg + click.style("%s", fg="cyan")},
-                )
-                break
+        if ep.name in config.SERVER_ENABLED_MODULES:
+            mod = ep.load()
+            for sub_ep in pkg_resources.iter_entry_points(f"gen3.server.{ep.name}"):
+                sub_ep.load()
+            msg = "Loaded module: "
+            logger.info(
+                msg + "%s",
+                ep.name,
+                extra={"color_message": msg + click.style("%s", fg="cyan")},
+            )
+            mod.init_app(app)
         else:
             msg = "Skipped module: "
             logger.info(
@@ -195,12 +196,6 @@ def load_extras():
                 ep.name,
                 extra={"color_message": msg + click.style("%s", fg="yellow")},
             )
-
-
-@app.get("/")
-async def read_root(conn=Depends(connection())):
-    rv = await conn.fetchone("SELECT 'World'")
-    return {"Hello": rv}
 
 
 @app.get("/migrate")

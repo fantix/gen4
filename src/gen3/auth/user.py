@@ -1,6 +1,7 @@
 from fastapi import Depends
 
-from ..server.app import app, connection
+from .server import mod
+from ..server.app import connection
 
 SCHEMA = """\
     type User {
@@ -9,7 +10,7 @@ SCHEMA = """\
 """
 
 
-@app.get("/user")
+@mod.get("/user")
 async def get_current_user(conn=Depends(connection("auth"))):
     async with conn.transaction():
         return await conn.fetchall("SELECT User { username }")

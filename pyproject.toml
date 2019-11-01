@@ -44,9 +44,18 @@ server = [
 "objects.bucket" = "gen3.objects.bucket:SCHEMA"
 
 [tool.poetry.plugins."gen3.server"]
-"auth.user" = "gen3.auth.user"
-"submission.dict" = "gen3.submission.dictionary"
-"objects.bucket" = "gen3.objects.bucket"
+"auth" = "gen3.auth.server:mod"
+"submission" = "gen3.submission.server:mod"
+"objects" = "gen3.objects.server:mod"
+
+[tool.poetry.plugins."gen3.server.auth"]
+"user" = "gen3.auth.user"
+
+[tool.poetry.plugins."gen3.server.submission"]
+"dict" = "gen3.submission.dictionary"
+
+[tool.poetry.plugins."gen3.server.objects"]
+"bucket" = "gen3.objects.bucket"
 
 [tool.poetry.plugins."gen3.objects.providers"]
 "fs" = "gen3.objects.providers.fs:FileSystemBucket"
