@@ -23,10 +23,10 @@ python-multipart = {version = "^0.0.5", optional = true}
 server = ["fastapi", "uvicorn", "email-validator", "edgedb", "pypfb", "python-multipart"]
 
 [tool.poetry.scripts]
-gen3 = 'gen3.cli:gen3'
+"gen3" = "gen3.cli:gen3"
 
 [tool.poetry.plugins."gen3.cli"]
-"server" = "gen3.server.cli"
+"server" = "gen3.server.cli [server]"
 
 [tool.poetry.plugins."gen3.schema"]
 "authn.user" = "gen3.authn.user:SCHEMA"
