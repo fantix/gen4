@@ -31,10 +31,15 @@ server = ["fastapi", "uvicorn", "email-validator", "edgedb", "pypfb", "python-mu
 
 [tool.poetry.plugins."gen3.schema"]
 "auth.user" = "gen3.auth.user:SCHEMA"
+"objects.bucket" = "gen3.objects.bucket:SCHEMA"
 
 [tool.poetry.plugins."gen3.server"]
 "auth.user" = "gen3.auth.user"
 "submission.dict" = "gen3.submission.dictionary"
+"objects.bucket" = "gen3.objects.bucket"
+
+[tool.poetry.plugins."gen3.objects.providers"]
+"fs" = "gen3.objects.providers.fs:FileSystemBucket"
 
 [build-system]
 requires = ["poetry>=0.12"]
