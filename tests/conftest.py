@@ -9,8 +9,8 @@ environ["SERVER_ENABLED_MODULES"] = "submission, auth, objects"
 
 @pytest.fixture(autouse=True, scope="session")
 def setup_test_database():
-    from .server import config
-    from .server.app import app
+    from gen3.server import config
+    from gen3.server.app import app
 
     print("Connecting to root database for test database setup...")
     conn = edgedb.connect(
@@ -44,7 +44,7 @@ def setup_test_database():
 
 @pytest.fixture()
 def client():
-    from .server.app import app
+    from gen3.server.app import app
 
     with TestClient(app) as client:
         yield client

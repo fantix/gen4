@@ -32,5 +32,5 @@ Try out the OpenAPI documentation at: http://localhost:8000/docs.
 To run tests:
 
 ```bash
-pytest --cov=gen3
+pytest --cov=gen3 tests
 ```
