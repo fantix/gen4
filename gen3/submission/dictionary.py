@@ -6,10 +6,11 @@ from fastapi import Depends, Path, UploadFile, File, HTTPException
 from pfb.reader import PFBReader
 from pydantic import BaseModel
 from starlette.responses import Response
+from starlette.status import HTTP_400_BAD_REQUEST
 
 from ..server import logger
 from ..server.app import app, connection
-from ..utils import ensure_module
+from ..utils import ensure_module, ID_REGEX
 
 _TYPES = {"string": "str", "boolean": "bool", "float": "float64", "long": "int64"}
 _ESCAPE = {"Case": "Case_"}
@@ -23,7 +24,7 @@ def _make_node_name(name):
 @app.post("/submissions/{schema}/schema")
 async def update_schema(
     conn=Depends(connection()),
-    schema: str = Path(..., regex="^[a-zA-Z_][a-zA-Z0-9_]*$"),
+    schema: str = Path(..., regex=ID_REGEX),
     file: UploadFile = File(...),
 ):
     schema = "gen3_" + schema
@@ -136,6 +137,6 @@ async def query_edgeql(
             media_type="application/json",
         )
     except edgedb.errors.QueryError as e:
-        raise HTTPException(400, str(e))
+        raise HTTPException(HTTP_400_BAD_REQUEST, str(e))
     finally:
         await conn.execute("RESET MODULE")
