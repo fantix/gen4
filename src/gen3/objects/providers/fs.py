@@ -9,6 +9,7 @@ from starlette.responses import FileResponse
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_409_CONFLICT
 
 from ..bucket import Bucket
+from ...server import logger
 
 BUFFER_SIZE = 65536
 
@@ -36,12 +37,22 @@ class FileSystemBucket(Bucket):
                 raise HTTPException(HTTP_404_NOT_FOUND)
             elif os.path.isdir(target):
                 rv = []
-                q = deque([target])
+                q = deque([iter(os.scandir(target))])
                 while q:
-                    for entry in os.scandir(q.popleft()):
-                        rv.append(os.path.relpath(entry.path, self.settings.root_dir))
-                        if recursive and entry.is_dir(follow_symlinks=False):
-                            q.append(entry.path)
+                    it = q[-1]
+                    try:
+                        while True:
+                            entry = next(it)
+                            rv.append(
+                                os.path.relpath(entry.path, self.settings.root_dir)
+                            )
+                            if recursive and entry.is_dir(follow_symlinks=False):
+                                q.append(iter(os.scandir(entry.path)))
+                                break
+                    except StopIteration:
+                        q.pop()
+                    except PermissionError as e:
+                        logger.warning(e)
                 return rv
             else:
                 return FileResponse(target)
