@@ -25,6 +25,19 @@ jobs:
       run: |
         curl -sSL https://raw.githubusercontent.com/sdispater/poetry/master/get-poetry.py | python
         $HOME/.poetry/bin/poetry install -E server
+    - name: Wait for EdgeDB to start
+      run: |
+        $HOME/.poetry/bin/poetry run python - << EOF
+        import edgedb
+        import time
+        for _ in range(1024):
+            try:
+                edgedb.connect(user="edgedb", database="edgedb")
+            except (edgedb.errors.ClientConnectionError, ConnectionAbortedError, ConnectionResetError, edgedb.errors.InternalServerError):
+                time.sleep(0.1)
+            else:
+                break
+        EOF
     - name: Test with pytest
       env:
         DB_USER: edgedb
