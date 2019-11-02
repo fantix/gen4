@@ -1,5 +1,8 @@
 # Gen3 on EdgeDB
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/f819f24801bb4bf79523bc48adfdbb25)](https://www.codacy.com/manual/fantix/gen4?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=fantix/gen4&amp;utm_campaign=Badge_Grade)
+[![Codacy Badge](https://api.codacy.com/project/badge/Coverage/f819f24801bb4bf79523bc48adfdbb25)](https://www.codacy.com/manual/fantix/gen4?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=fantix/gen4&amp;utm_campaign=Badge_Coverage)
+
 This is a PoC project to build [Gen3](https://gen3.org/) on [EdgeDB](https://edgedb.com/).
 The server is built with [FastAPI](https://fastapi.tiangolo.com/) and packaged with
 [Poetry](https://poetry.eustace.io/). The API is not compatible with Gen3.
