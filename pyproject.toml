@@ -3,9 +3,11 @@ name = "gen3"
 version = "3.1.0"
 description = "Gen3 Data Commons."
 license = "Apache-2.0"
+readme = "README.md"
 homepage = "https://gen3.org/"
 repository = "https://github.com/uc-cdis/gen3"
 authors = ["Fantix King <fantix@uchicago.edu>"]
+include = ["NOTICE"]
 
 [tool.poetry.dependencies]
 python = "^3.7"
