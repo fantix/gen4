@@ -15,5 +15,5 @@ class Module(fastapi.APIRouter):
         super().__init__()
         self._kwargs = kwargs
 
-    def init_app(self, app):
-        app.include_router(self, **self._kwargs)
+    def init_app(self, app, api):
+        api.include_router(self, **self._kwargs)

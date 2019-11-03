@@ -1,5 +1,6 @@
 import logging
 import ssl
+import subprocess
 import typing
 
 import click
@@ -39,7 +40,9 @@ SSL_PROTOCOL_VERSION = getattr(ssl, "PROTOCOL_TLS", ssl.PROTOCOL_SSLv23)
 @click.option(
     "--debug", is_flag=True, default=False, help="Enable debug mode.", hidden=True
 )
-@click.option("--reload", is_flag=True, default=False, help="Enable auto-reload.")
+@click.option(
+    "--reload/--no-reload", is_flag=True, default=True, help="Enable auto-reload."
+)
 @click.option(
     "--reload-dir",
     "reload_dirs",
@@ -164,6 +167,13 @@ SSL_PROTOCOL_VERSION = getattr(ssl, "PROTOCOL_TLS", ssl.PROTOCOL_SSLv23)
     multiple=True,
     help="Specify custom default HTTP response headers as a Name:Value pair",
 )
+@click.option(
+    "--web",
+    type=click.Path(),
+    default="web",
+    help="Specify where the source of the web frontend is.",
+)
+@click.option("--no-web", is_flag=True)
 def run(
     host: str,
     port: int,
@@ -190,6 +200,8 @@ def run(
     ssl_ca_certs: str,
     ssl_ciphers: str,
     headers: typing.List[str],
+    web: str,
+    no_web: bool,
 ):
     """Run Gen3 server."""
     import uvicorn
@@ -234,4 +246,12 @@ def run(
         "ssl_ciphers": ssl_ciphers,
         "headers": list([header.split(":") for header in headers]),
     }
+    if web and not no_web:
+        web_proc = subprocess.Popen(["yarn", "serve"], cwd=web)
+    else:
+        web_proc = None
     uvicorn.run(**kwargs)
+    if web_proc is not None:
+        web_proc.terminate()
+        web_proc.wait(4)
+        web_proc.kill()

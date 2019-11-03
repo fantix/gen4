@@ -1,16 +1,22 @@
 <template>
   <v-app>
-    <v-app-bar app>
+    <v-app-bar app color="primary" dark>
       <v-toolbar-title class="headline text-uppercase">
-        <span>Gen3</span>
-        &nbsp;
+        <span class="mr-2">Gen3</span>
         <span class="font-weight-light">Data Commons</span>
       </v-toolbar-title>
+      <v-btn rounded color="grey" dark x-small class="ml-3">{{ version }}</v-btn>
       <v-spacer></v-spacer>
       <router-link to="/" v-slot="href">
         <v-btn text :href="href.href">
           <v-icon>mdi-home</v-icon>
           <span class="ml-1">Home</span>
+        </v-btn>
+      </router-link>
+      <router-link to="/docs" v-slot="href">
+        <v-btn text :href="href.href">
+          <v-icon>mdi-code-tags</v-icon>
+          <span class="ml-1">API Docs</span>
         </v-btn>
       </router-link>
       <router-link to="/about" v-slot="href">
@@ -37,7 +43,6 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-align: center;
-    color: #2c3e50;
   }
 </style>
 
@@ -45,7 +50,10 @@
 export default {
   name: 'App',
   data: () => ({
-    //
+    version: ""
   }),
+  async mounted() {
+    this.version = (await this.axios.get('/api/version')).data
+  }
 };
 </script>

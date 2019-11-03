@@ -3,7 +3,7 @@ import asyncio
 import click
 import edgedb
 import pkg_resources
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, APIRouter
 
 from . import logger, config
 from .utils import ensure_module
@@ -15,6 +15,11 @@ class Application(FastAPI):
             title="Gen3 Data Commons",
             version=pkg_resources.get_distribution("gen3").version,
             debug=config.DEBUG,
+            openapi_url=config.SERVER_URL_PREFIX + "/openapi.json",
+            docs_url=config.SERVER_URL_PREFIX + "/docs",
+            redoc_url=config.SERVER_URL_PREFIX + "/redoc",
+            swagger_ui_oauth2_redirect_url=config.SERVER_URL_PREFIX
+            + "/docs/oauth2-redirect",
         )
         self._pool = None
 
@@ -32,6 +37,7 @@ class Application(FastAPI):
 
 
 app = Application()
+api = APIRouter()
 
 
 class Pool(edgedb.AsyncIOPool):
@@ -188,7 +194,7 @@ def load_extras():
                 ep.name,
                 extra={"color_message": msg + click.style("%s", fg="cyan")},
             )
-            mod.init_app(app)
+            mod.init_app(app, api)
         else:
             msg = "Skipped module: "
             logger.info(
@@ -196,9 +202,10 @@ def load_extras():
                 ep.name,
                 extra={"color_message": msg + click.style("%s", fg="yellow")},
             )
+    app.include_router(api, prefix=config.SERVER_URL_PREFIX)
 
 
-@app.get("/migrate")
+@api.get("/migrate")
 async def migrate(conn=Depends(connection())):
     schemas = {}
 
@@ -228,6 +235,11 @@ CREATE MIGRATION {module}::migs TO {{
             except edgedb.errors.InternalServerError:
                 # bug in EdgeDB
                 tx.raise_rollback()
+
+
+@api.get("/version")
+def get_version():
+    return pkg_resources.get_distribution("gen3").version
 
 
 load_extras()

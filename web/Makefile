@@ -1,0 +1,4 @@
+all:
+	yarn
+
+.PHONY: all

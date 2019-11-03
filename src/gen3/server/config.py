@@ -21,8 +21,10 @@ SERVER_ENABLED_MODULES = config(
     cast=CommaSeparatedStrings,
     default=["submission", "auth", "objects"],
 )
+SERVER_URL_PREFIX = config("SERVER_URL_PREFIX", default="/api")
 
 if TESTING:
-    DB_DATABASE_ROOT = 'edgedb'
+    DB_DATABASE_ROOT = "edgedb"
     DB_DATABASE = "test_" + (DB_DATABASE or "gen3")
     TEST_KEEP_DB = config("TEST_KEEP_DB", cast=bool, default=False)
+    SERVER_URL_PREFIX = ""
