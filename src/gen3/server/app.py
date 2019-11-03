@@ -4,6 +4,7 @@ import click
 import edgedb
 import pkg_resources
 from fastapi import FastAPI, Depends, APIRouter
+from starlette.responses import HTMLResponse
 
 from . import logger, config
 from .utils import ensure_module
@@ -16,10 +17,9 @@ class Application(FastAPI):
             version=pkg_resources.get_distribution("gen3").version,
             debug=config.DEBUG,
             openapi_url=config.SERVER_URL_PREFIX + "/openapi.json",
-            docs_url=config.SERVER_URL_PREFIX + "/docs",
-            redoc_url=config.SERVER_URL_PREFIX + "/redoc",
-            swagger_ui_oauth2_redirect_url=config.SERVER_URL_PREFIX
-            + "/docs/oauth2-redirect",
+            docs_url=None,
+            redoc_url=None,
+            swagger_ui_oauth2_redirect_url=None,
         )
         self._pool = None
 
@@ -240,6 +240,57 @@ CREATE MIGRATION {module}::migs TO {{
 @api.get("/version")
 def get_version():
     return pkg_resources.get_distribution("gen3").version
+
+
+@api.route("/docs", include_in_schema=False)
+def swagger_ui_html(_):
+    html = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <link type="text/css" rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui.css">
+    <title>{app.title}</title>
+    </head>
+    <body>
+    <div id="swagger-ui">
+    </div>
+    <script
+    src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui-bundle.js"></script>
+    <!-- `SwaggerUIBundle` is now available on the page -->
+    <script>
+    function HideTopbarPlugin() {{
+      // this plugin overrides the Topbar component to return nothing
+      return {{ components: {{
+          info: function() {{ return null }}
+        }}
+      }}
+    }}
+
+    const ui = SwaggerUIBundle({{
+        url: '{app.openapi_url}',
+        dom_id: '#swagger-ui',
+        presets: [
+        SwaggerUIBundle.presets.apis,
+        SwaggerUIBundle.SwaggerUIStandalonePreset
+        ],
+          plugins: [
+    SwaggerUIBundle.plugins.DownloadUrl,
+    HideTopbarPlugin
+  ],
+
+        layout: "BaseLayout",
+        deepLinking: true,
+        onComplete: function () {{
+            var event = new CustomEvent('swagger-load')
+            window.parent.document.dispatchEvent(event)
+        }}
+    }})
+    </script>
+    </body>
+    </html>
+    """
+    return HTMLResponse(html)
 
 
 load_extras()

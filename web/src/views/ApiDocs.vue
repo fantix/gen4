@@ -1,11 +1,28 @@
 <template>
-    <iframe id="api-docs" src="/api/docs"></iframe>
+    <v-card>
+        <iframe ref="swagger" class="swagger" src="/api/docs" height="300px"></iframe>
+    </v-card>
 </template>
 
-<style>
-    #api-docs {
+<style scoped>
+    .swagger {
         width: 100%;
-        height: 100%;
         border: none;
     }
 </style>
+
+<script>
+    export default {
+        mounted() {
+            document.addEventListener('swagger-load', this.resize)
+        },
+        beforeDestroy() {
+            document.removeEventListener('swagger-load', this.resize)
+        },
+        methods: {
+            resize() {
+                this.$refs.swagger.height = this.$refs.swagger.contentWindow.document.body.scrollHeight + 10
+            }
+        }
+    }
+</script>
