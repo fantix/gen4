@@ -2,34 +2,48 @@
   <v-app>
     <v-app-bar app>
       <v-toolbar-title class="headline text-uppercase">
-        <span>Vuetify</span>
-        <span class="font-weight-light">MATERIAL DESIGN</span>
+        <span>Gen3</span>
+        &nbsp;
+        <span class="font-weight-light">Data Commons</span>
       </v-toolbar-title>
       <v-spacer></v-spacer>
-      <v-btn
-        text
-        href="https://github.com/vuetifyjs/vuetify/releases/latest"
-        target="_blank"
-      >
-        <span class="mr-2">Latest Release</span>
+      <router-link to="/" v-slot="href">
+        <v-btn text :href="href.href">
+          <v-icon>mdi-home</v-icon>
+          <span class="ml-1">Home</span>
+        </v-btn>
+      </router-link>
+      <router-link to="/about" v-slot="href">
+        <v-btn text :href="href.href">
+          <v-icon>mdi-information</v-icon>
+          <span class="ml-1">About</span>
+        </v-btn>
+      </router-link>
+      <v-btn text href="https://gen3.org/" target="_blank">
+        <span class="mr-1">Website</span>
         <v-icon>mdi-open-in-new</v-icon>
       </v-btn>
     </v-app-bar>
 
     <v-content>
-      <HelloWorld/>
+      <router-view/>
     </v-content>
   </v-app>
 </template>
 
-<script>
-import HelloWorld from './components/HelloWorld';
+<style lang="scss">
+  #app {
+    font-family: 'Source Sans Pro', Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-align: center;
+    color: #2c3e50;
+  }
+</style>
 
+<script>
 export default {
   name: 'App',
-  components: {
-    HelloWorld,
-  },
   data: () => ({
     //
   }),
