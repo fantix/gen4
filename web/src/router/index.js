@@ -8,7 +8,12 @@ const routes = [
   {
     path: '/',
     name: 'home',
-    component: Home
+    component: Home,
+  },
+  {
+    path: '/bucket',
+    name: 'bucket',
+    component: () => import('../views/Bucket.vue')
   },
   {
     path: '/docs',

@@ -19,6 +19,8 @@ class FileSystemSettings(BaseModel):
 
 
 class FileSystemBucket(Bucket):
+    """Local file system bucket."""
+
     settings: FileSystemSettings = {}
 
     def _get_target(self, path):

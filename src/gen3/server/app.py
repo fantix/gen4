@@ -36,7 +36,31 @@ class Application(FastAPI):
             self._pool = None
 
 
+class ProxyHeadersMiddleware:
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] in ("http", "websocket"):
+            headers = dict(scope["headers"])
+
+            if b"x-forwarded-host" in headers:
+                x_forwarded_host = headers[b"x-forwarded-host"].decode("ascii")
+                (host, sep, port) = x_forwarded_host.partition(":")
+                if sep is None:
+                    scope["server"] = (host, 0)
+                else:
+                    scope["server"] = (host, int(port))
+
+                if b"host" in headers:
+                    headers[b"host"] = headers[b"x-forwarded-host"]
+                    scope["headers"] = list(headers.items())
+
+        await self.app(scope, receive, send)
+
+
 app = Application()
+app.add_middleware(ProxyHeadersMiddleware)
 api = APIRouter()
 
 

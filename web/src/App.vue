@@ -76,6 +76,11 @@ export default {
         title: 'Home',
       },
       {
+        link: '/bucket',
+        icon: 'mdi-bitbucket',
+        title: 'Bucket',
+      },
+      {
         link: '/docs',
         icon: 'mdi-code-tags',
         title: 'API Docs',
@@ -85,10 +90,6 @@ export default {
       {
         text: 'Home',
         href: '/',
-      },
-      {
-        text: 'API Docs',
-        href: '/docs',
       },
     ],
     item: null,

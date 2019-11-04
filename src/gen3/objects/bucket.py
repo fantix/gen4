@@ -32,6 +32,11 @@ SCHEMA = """\
 installed_providers = {}
 
 
+@mod.get("/providers")
+def get_providers():
+    return {key: provider.__doc__ for key, provider in installed_providers.items()}
+
+
 class Bucket(BaseModel):
     name: str = Schema(..., regex=ID_REGEX)
     provider: str

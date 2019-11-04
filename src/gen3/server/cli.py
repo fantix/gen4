@@ -86,7 +86,7 @@ SSL_PROTOCOL_VERSION = getattr(ssl, "PROTOCOL_TLS", ssl.PROTOCOL_SSLv23)
 @click.option(
     "--proxy-headers/--no-proxy-headers",
     is_flag=True,
-    default=None,
+    default=True,
     help="Enable/Disable X-Forwarded-Proto, X-Forwarded-For, X-Forwarded-Port to "
     "populate remote address info.",
 )
