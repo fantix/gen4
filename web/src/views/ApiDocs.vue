@@ -14,10 +14,10 @@
 <script>
     export default {
         mounted() {
-            document.addEventListener('swagger-load', this.resize)
+            document.addEventListener('swagger-resize', this.resize)
         },
         beforeDestroy() {
-            document.removeEventListener('swagger-load', this.resize)
+            document.removeEventListener('swagger-resize', this.resize)
         },
         methods: {
             resize() {

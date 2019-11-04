@@ -251,8 +251,24 @@ def swagger_ui_html(_):
     <link type="text/css" rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@3/swagger-ui.css">
     <title>{app.title}</title>
+    <style>
+    body {{
+      position: relative;
+    }}
+    #height-change-listener {{
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      height: 100%;
+      width: 0;
+      border: 0;
+      background-color: transparent;
+    }}
+    </style>
     </head>
     <body>
+    <iframe id="height-change-listener" tabindex="-1"></iframe>
     <div id="swagger-ui">
     </div>
     <script
@@ -282,9 +298,12 @@ def swagger_ui_html(_):
         layout: "BaseLayout",
         deepLinking: true,
         onComplete: function () {{
-            var event = new CustomEvent('swagger-load')
-            window.parent.document.dispatchEvent(event)
+            window.parent.document.dispatchEvent(new CustomEvent('swagger-load'))
         }}
+    }})
+
+    document.getElementById('height-change-listener').contentWindow.addEventListener('resize', function () {{
+        window.parent.document.dispatchEvent(new CustomEvent('swagger-resize'))
     }})
     </script>
     </body>
