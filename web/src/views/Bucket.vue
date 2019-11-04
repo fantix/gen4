@@ -35,7 +35,7 @@
                 <v-card class="px-8">
                     <v-card-title>Installed Bucket Drivers</v-card-title>
                     <v-divider></v-divider>
-                    <v-list-item two-line v-for="(desc, provider) in providers">
+                    <v-list-item two-line v-for="(desc, provider) in providers" :key="provider">
                         <v-list-item-avatar>
                             <v-icon>{{icons[provider]}}</v-icon>
                         </v-list-item-avatar>
