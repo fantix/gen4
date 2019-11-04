@@ -7,7 +7,14 @@ readme = "README.md"
 homepage = "https://gen3.org/"
 repository = "https://github.com/uc-cdis/gen3"
 authors = ["Fantix King <fantix@uchicago.edu>"]
-include = ["NOTICE"]
+include = ["NOTICE", "Makefile"]
+
+# Bug in Poetry 1.0b3: different "from" is not well supported
+#packages = [
+#    { include = "gen3", from = "src" },
+#    { include = "web", format = "sdist" },
+#    { include = "tests", format = "sdist" },
+#]
 
 [tool.poetry.dependencies]
 python = "^3.7"

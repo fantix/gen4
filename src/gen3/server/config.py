@@ -22,6 +22,10 @@ SERVER_ENABLED_MODULES = config(
     default=["submission", "auth", "objects"],
 )
 SERVER_URL_PREFIX = config("SERVER_URL_PREFIX", default="/api")
+SERVER_WEB_DIR = config("SERVER_WEB_DIR", default="")
+SERVER_USE_FORWARDED_HOST = config(
+    "SERVER_USE_FORWARDED_HOST", cast=bool, default=False
+)
 
 if TESTING:
     DB_DATABASE_ROOT = "edgedb"

@@ -64,3 +64,18 @@ Run only the Web dev server under `web` folder:
 ```bash
 yarn serve
 ```
+
+
+## Deployment
+
+To make a release:
+
+```bash
+make dist
+```
+
+To clean releases:
+
+```bash
+make clean
+```

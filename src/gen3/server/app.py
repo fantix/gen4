@@ -5,6 +5,7 @@ import edgedb
 import pkg_resources
 from fastapi import FastAPI, Depends, APIRouter
 from starlette.responses import HTMLResponse
+from starlette.staticfiles import StaticFiles
 
 from . import logger, config
 from .utils import ensure_module
@@ -36,31 +37,7 @@ class Application(FastAPI):
             self._pool = None
 
 
-class ProxyHeadersMiddleware:
-    def __init__(self, app):
-        self.app = app
-
-    async def __call__(self, scope, receive, send):
-        if scope["type"] in ("http", "websocket"):
-            headers = dict(scope["headers"])
-
-            if b"x-forwarded-host" in headers:
-                x_forwarded_host = headers[b"x-forwarded-host"].decode("ascii")
-                (host, sep, port) = x_forwarded_host.partition(":")
-                if sep is None:
-                    scope["server"] = (host, 0)
-                else:
-                    scope["server"] = (host, int(port))
-
-                if b"host" in headers:
-                    headers[b"host"] = headers[b"x-forwarded-host"]
-                    scope["headers"] = list(headers.items())
-
-        await self.app(scope, receive, send)
-
-
 app = Application()
-app.add_middleware(ProxyHeadersMiddleware)
 api = APIRouter()
 
 
@@ -201,6 +178,54 @@ def connection(module=None):
 
 
 def load_extras():
+    if config.SERVER_WEB_DIR:
+        msg = "Serving Web files from: "
+        logger.info(
+            msg + "%s",
+            config.SERVER_WEB_DIR,
+            extra={"color_message": msg + click.style("%s", fg="cyan")},
+        )
+        web = StaticFiles(directory=config.SERVER_WEB_DIR)
+
+        async def default(scope, receive, send):
+            path = web.get_path(scope)
+            if path.startswith("api/"):
+                await app.router.not_found(scope, receive, send)
+            else:
+                response = await web.get_response(path, scope)
+                if response.status_code == 404:
+                    response = await web.get_response("index.html", scope)
+                await response(scope, receive, send)
+
+        app.router.default = default
+
+    if config.SERVER_USE_FORWARDED_HOST:
+        logger.info("Enabled handling X-Forwarded-Host.")
+
+        class ProxyHeadersMiddleware:
+            def __init__(self, app_):
+                self.app = app_
+
+            async def __call__(self, scope, receive, send):
+                if scope["type"] in ("http", "websocket"):
+                    headers = dict(scope["headers"])
+
+                    if b"x-forwarded-host" in headers:
+                        x_forwarded_host = headers[b"x-forwarded-host"].decode("ascii")
+                        (host, sep, port) = x_forwarded_host.partition(":")
+                        if sep is None:
+                            scope["server"] = (host, 0)
+                        else:
+                            scope["server"] = (host, int(port))
+
+                        if b"host" in headers:
+                            headers[b"host"] = headers[b"x-forwarded-host"]
+                            scope["headers"] = list(headers.items())
+
+                await self.app(scope, receive, send)
+
+        app.add_middleware(ProxyHeadersMiddleware)
+
     msg = "Start to load extra modules, enabled modules: "
     logger.info(
         msg + "%s",
@@ -326,8 +351,9 @@ def swagger_ui_html(_):
         }}
     }})
 
-    document.getElementById('height-change-listener').contentWindow.addEventListener('resize', function () {{
-        window.parent.document.dispatchEvent(new CustomEvent('swagger-resize'))
+    document.getElementById('height-change-listener').contentWindow.addEventListener(
+        'resize', function () {{
+            window.parent.document.dispatchEvent(new CustomEvent('swagger-resize'))
     }})
     </script>
     </body>

@@ -1,9 +1,11 @@
 import logging
+import os
 import ssl
 import subprocess
 import typing
 
 import click
+from starlette.config import environ
 
 from ..cli import gen3
 
@@ -167,12 +169,6 @@ SSL_PROTOCOL_VERSION = getattr(ssl, "PROTOCOL_TLS", ssl.PROTOCOL_SSLv23)
     multiple=True,
     help="Specify custom default HTTP response headers as a Name:Value pair",
 )
-@click.option(
-    "--web",
-    type=click.Path(),
-    default="web",
-    help="Specify where the source of the web frontend is.",
-)
 @click.option("--no-web", is_flag=True)
 def run(
     host: str,
@@ -200,11 +196,22 @@ def run(
     ssl_ca_certs: str,
     ssl_ciphers: str,
     headers: typing.List[str],
-    web: str,
     no_web: bool,
 ):
     """Run Gen3 server."""
     import uvicorn
+
+    web = os.path.abspath(
+        os.path.join(os.path.abspath(os.path.dirname(__file__)), "../../../web")
+    )
+    web_proc = None
+    if not no_web:
+        static = os.path.join(os.path.dirname(__file__), "static")
+        if os.path.isdir(static):
+            environ["SERVER_WEB_DIR"] = static
+        elif os.path.exists(os.path.join(web, "package.json")):
+            environ["SERVER_USE_FORWARDED_HOST"] = "TRUE"
+            web_proc = subprocess.Popen(["yarn", "serve"], cwd=web)
 
     if reload:
         app = "gen3.server.app:app"
@@ -246,12 +253,13 @@ def run(
         "ssl_ciphers": ssl_ciphers,
         "headers": list([header.split(":") for header in headers]),
     }
-    if web and not no_web:
-        web_proc = subprocess.Popen(["yarn", "serve"], cwd=web)
-    else:
-        web_proc = None
-    uvicorn.run(**kwargs)
-    if web_proc is not None:
-        web_proc.terminate()
-        web_proc.wait(4)
-        web_proc.kill()
+    try:
+        uvicorn.run(**kwargs)
+    finally:
+        if web_proc is not None:
+            # noinspection PyBroadException
+            try:
+                web_proc.terminate()
+                web_proc.wait(4)
+            except BaseException:
+                web_proc.kill()
