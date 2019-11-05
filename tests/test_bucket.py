@@ -84,16 +84,23 @@ def test_fs(client, tmpdir):
     assert client.get("/objects/buckets/tBcfs/abc").status_code == 404
 
     os.mkdir(os.path.join(tmpdir, "abc"))
-    assert client.get("/objects/buckets/tBcfs/").json() == ["abc"]
+    assert [e["name"] for e in client.get("/objects/buckets/tBcfs/").json()] == ["abc"]
 
     data = str(uuid.uuid4())
     with open(os.path.join(tmpdir, "abc/test.txt"), "a") as f:
         f.write(data)
-    assert client.get("/objects/buckets/tBcfs/").json() == ["abc", "abc/test.txt"]
-    assert client.get(
-        "/objects/buckets/tBcfs/", params=dict(recursive=False)
-    ).json() == ["abc"]
-    assert client.get("/objects/buckets/tBcfs/abc").json() == ["abc/test.txt"]
+    assert sorted(
+        [e["name"] for e in client.get("/objects/buckets/tBcfs/").json()]
+    ) == sorted(["abc", "abc/test.txt"])
+    assert [
+        e["name"]
+        for e in client.get(
+            "/objects/buckets/tBcfs/", params=dict(recursive=False)
+        ).json()
+    ] == ["abc"]
+    assert [e["name"] for e in client.get("/objects/buckets/tBcfs/abc").json()] == [
+        "test.txt"
+    ]
     assert client.get("/objects/buckets/tBcfs/abc/test.txt").text == data
 
     with open(os.path.join(tmpdir, "abc/test.txt")) as f:
@@ -106,9 +113,9 @@ def test_fs(client, tmpdir):
             "/objects/buckets/tBcfs/abc/upload.txt", files=dict(file=f)
         ).json()["size"] == len(data)
     assert client.get("/objects/buckets/tBcfs/abc/upload.txt").text == data
-    assert sorted(client.get("/objects/buckets/tBcfs/abc").json()) == sorted(
-        ["abc/test.txt", "abc/upload.txt"]
-    )
+    assert sorted(
+        [e["name"] for e in client.get("/objects/buckets/tBcfs/abc").json()]
+    ) == sorted(["test.txt", "upload.txt"])
 
     assert client.delete("/objects/buckets/tBcfs/abc").status_code == 204
     assert client.get("/objects/buckets/tBcfs/abc").status_code == 404

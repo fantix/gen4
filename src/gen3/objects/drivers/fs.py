@@ -45,8 +45,16 @@ class FileSystemBucket(Bucket):
                     try:
                         while True:
                             entry = next(it)
+                            stat = entry.stat()
                             rv.append(
-                                os.path.relpath(entry.path, self.settings.root_dir)
+                                dict(
+                                    name=os.path.relpath(
+                                        entry.path, target
+                                    ),
+                                    dir=entry.is_dir(),
+                                    size=stat.st_size,
+                                    mtime=stat.st_mtime,
+                                )
                             )
                             if recursive and entry.is_dir(follow_symlinks=False):
                                 q.append(iter(os.scandir(entry.path)))

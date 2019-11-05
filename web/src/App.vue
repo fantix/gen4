@@ -76,9 +76,14 @@ export default {
         title: 'Home',
       },
       {
-        link: '/bucket',
+        link: '/buckets',
         icon: 'mdi-bitbucket',
-        title: 'Bucket',
+        title: 'Buckets',
+      },
+      {
+        link: '/files',
+        icon: 'mdi-file-multiple',
+        title: 'Files',
       },
       {
         link: '/docs',

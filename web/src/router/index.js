@@ -11,9 +11,14 @@ const routes = [
     component: Home,
   },
   {
-    path: '/bucket',
-    name: 'bucket',
-    component: () => import('../views/Bucket.vue')
+    path: '/buckets',
+    name: 'buckets',
+    component: () => import('../views/Buckets.vue')
+  },
+  {
+    path: '/files',
+    name: 'files',
+    component: () => import('../views/Files.vue')
   },
   {
     path: '/docs',

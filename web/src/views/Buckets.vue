@@ -129,7 +129,7 @@
     }
 
     export default {
-        name: "Bucket",
+        name: "Buckets",
         data: () => ({
             icons: {
                 fs: 'mdi-harddisk',
