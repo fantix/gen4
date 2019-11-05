@@ -27,13 +27,13 @@
                         <v-row>
                           <v-col cols="12" md="5" sm="4">
                             <v-select
-                                :error="errors.provider !== null"
-                                :error-messages="errors.provider"
-                                :items="Object.keys(providers)"
-                                :prepend-icon="icons[editedItem.provider]"
+                                :error="errors.driver !== null"
+                                :error-messages="errors.driver"
+                                :items="Object.keys(drivers)"
+                                :prepend-icon="icons[editedItem.driver]"
                                 :readonly="editedIndex !== -1"
                                 label="Bucket Driver"
-                                v-model="editedItem.provider">
+                                v-model="editedItem.driver">
                             </v-select>
                           </v-col>
                           <v-col cols="12" md="7" sm="4">
@@ -44,7 +44,7 @@
                                 label="Bucket Name"
                                 v-model="editedItem.name"></v-text-field>
                           </v-col>
-                          <v-col cols="12" md="12" sm="6"
+                          <v-col cols="12" md="12" sm="6" :key="field.name"
                                  v-for="field in editedFields">
                             <v-text-field
                                 :error="errors[field.name] !== null"
@@ -69,7 +69,7 @@
                 </v-dialog>
               </v-toolbar>
             </template>
-            <template v-slot:item.provider="{ item }">
+            <template v-slot:item.driver="{ item }">
               <v-tooltip bottom>
                 <template v-slot:activator="{ on }">
                   <span
@@ -77,12 +77,12 @@
                       v-on="on">
                       <v-icon
                           :color="item.installed ? 'inherit' : '#ccc'">
-                          {{icons[item.provider] || 'mdi-cloud-question'}}
+                          {{icons[item.driver] || 'mdi-cloud-question'}}
                       </v-icon>
-                      {{item.provider}}
+                      {{item.driver}}
                   </span>
                 </template>
-                <span>{{Object.assign({desc: 'Unknown bucket driver.'}, providers[item.provider]).desc}}</span>
+                <span>{{Object.assign({desc: 'Unknown bucket driver.'}, drivers[item.driver]).desc}}</span>
               </v-tooltip>
             </template>
             <template v-slot:item.enabled="{ item }">
@@ -107,13 +107,13 @@
         <v-card class="px-8">
           <v-card-title>Installed Bucket Drivers</v-card-title>
           <v-divider></v-divider>
-          <v-list-item :key="name" two-line v-for="(provider, name) in providers">
+          <v-list-item :key="name" two-line v-for="(driver, name) in drivers">
             <v-list-item-avatar>
               <v-icon>{{icons[name]}}</v-icon>
             </v-list-item-avatar>
             <v-list-item-content>
               <v-list-item-title>{{name}}</v-list-item-title>
-              <v-list-item-subtitle>{{provider.desc}}
+              <v-list-item-subtitle>{{driver.desc}}
               </v-list-item-subtitle>
             </v-list-item-content>
           </v-list-item>
@@ -140,41 +140,41 @@
             },
             headers: [
                 {text: 'Name', value: 'name'},
-                {text: 'Driver', value: 'provider', width: 120},
+                {text: 'Driver', value: 'driver', width: 120},
                 {text: 'Enabled', value: 'enabled', width: 120},
                 {text: 'Actions', value: 'action', sortable: false, width: 120},
             ],
             buckets: [],
-            providers: {},
+            drivers: {},
             drivers: [],
             dialog: false,
             editedIndex: -1,
             editedItem: {
                 name: '',
-                provider: '',
+                driver: '',
                 settings: {},
             },
             errors: {
                 name: null,
-                provider: null,
+                driver: null,
             },
             defaultItem: {
                 name: '',
-                provider: '',
+                driver: '',
                 settings: {},
             },
             saving: false,
         }),
         async mounted() {
             this.reload()
-            this.providers = (await this.$axios.get('/api/objects/providers')).data
+            this.drivers = (await this.$axios.get('/api/objects/drivers')).data
         },
         computed: {
             formTitle() {
                 return this.editedIndex === -1 ? 'Add Bucket' : 'Edit Bucket'
             },
             editedFields() {
-                let p = this.providers[this.editedItem.provider]
+                let p = this.drivers[this.editedItem.driver]
                 if (!p) return []
                 let rv = []
                 for (let field of Object.keys(p.settings.properties)) {
@@ -189,8 +189,8 @@
             }
         },
         watch: {
-            'editedItem.provider'(val) {
-                let p = this.providers[val]
+            'editedItem.driver'(val) {
+                let p = this.drivers[val]
                 if (!p) return
                 for (let field of Object.keys(p.settings.properties)) {
                     this.errors[field] = null
@@ -239,7 +239,7 @@
                     if (this.editedIndex === -1) {
                         let resp = await this.$axios.post('/api/objects/buckets', {
                             name: this.editedItem.name,
-                            provider: this.editedItem.provider,
+                            driver: this.editedItem.driver,
                             settings: this.editedItem.settings,
                         })
                         resp = await this.$axios.get(resp.data.href)

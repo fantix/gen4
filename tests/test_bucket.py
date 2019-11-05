@@ -7,7 +7,7 @@ def test_schema(client):
     assert client.post("/objects/buckets", json=dict(name="tBc_1")).status_code == 422
     assert (
         client.post(
-            "/objects/buckets", json=dict(name="1_tbc", provider="s3")
+            "/objects/buckets", json=dict(name="1_tbc", driver="s3")
         ).status_code
         == 422
     )
@@ -19,7 +19,7 @@ def test_schema(client):
 def test_crud(client):
     assert client.get("/objects/buckets").json() == []
 
-    resp = client.post("/objects/buckets", json=dict(name="tBc_1", provider="n/a"))
+    resp = client.post("/objects/buckets", json=dict(name="tBc_1", driver="n/a"))
     assert resp.status_code == 201, resp.json()
     href = resp.json()["href"]
 
@@ -27,14 +27,14 @@ def test_crud(client):
     bucket = resp.json()
     assert resp.status_code == 200, bucket
     assert bucket["name"] == "tBc_1"
-    assert bucket["provider"] == "n/a"
+    assert bucket["driver"] == "n/a"
     assert bucket["enabled"] is True
     assert bucket["settings"] == {}
 
     resp = client.get("/objects/buckets")
     assert resp.status_code == 200, resp.json()
     bucket2 = resp.json()[0]
-    for key in ("name", "provider", "enabled"):
+    for key in ("name", "driver", "enabled"):
         assert bucket[key] == bucket2[key]
     assert not bucket2["installed"]
 
@@ -59,7 +59,7 @@ def test_crud(client):
 def test_fs(client, tmpdir):
     resp = client.post(
         "/objects/buckets",
-        json=dict(name="tBcfs", provider="fs", settings=dict(root_dir=str(tmpdir))),
+        json=dict(name="tBcfs", driver="fs", settings=dict(root_dir=str(tmpdir))),
     )
     assert resp.status_code == 201, resp.json()
     href = resp.json()["href"]
@@ -68,14 +68,14 @@ def test_fs(client, tmpdir):
     bucket = resp.json()
     assert resp.status_code == 200, bucket
     assert bucket["name"] == "tBcfs"
-    assert bucket["provider"] == "fs"
+    assert bucket["driver"] == "fs"
     assert bucket["enabled"] is True
     assert bucket["settings"] == {"root_dir": str(tmpdir)}
 
     resp = client.get("/objects/buckets")
     assert resp.status_code == 200, resp.json()
     bucket2 = resp.json()[0]
-    for key in ("name", "provider", "enabled"):
+    for key in ("name", "driver", "enabled"):
         assert bucket[key] == bucket2[key]
     assert bucket2["installed"]
 

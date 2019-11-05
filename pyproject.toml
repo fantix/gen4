@@ -67,8 +67,8 @@ server = [
 [tool.poetry.plugins."gen3.server.objects"]
 "bucket" = "gen3.objects.bucket"
 
-[tool.poetry.plugins."gen3.objects.providers"]
-"fs" = "gen3.objects.providers.fs:FileSystemBucket"
+[tool.poetry.plugins."gen3.objects.drivers"]
+"fs" = "gen3.objects.drivers.fs:FileSystemBucket"
 
 [build-system]
 requires = ["poetry>=0.12"]

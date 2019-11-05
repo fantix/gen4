@@ -25,30 +25,30 @@ SCHEMA = """\
         required property name -> str {
             constraint exclusive;
         }
-        required property provider -> str;
+        required property driver -> str;
         required property settings -> json;
         required property enabled -> bool {
             default := true;
         }
     }
 """
-installed_providers = {}
+installed_drivers = {}
 
 
-@mod.get("/providers")
-def get_providers():
+@mod.get("/drivers")
+def get_drivers():
     return {
         key: dict(
-            desc=provider.__doc__,
-            settings=typing.get_type_hints(provider)["settings"].schema(),
+            desc=driver.__doc__,
+            settings=typing.get_type_hints(driver)["settings"].schema(),
         )
-        for key, provider in installed_providers.items()
+        for key, driver in installed_drivers.items()
     }
 
 
 class Bucket(BaseModel):
     name: str = Schema(..., regex=ID_REGEX)
-    provider: str
+    driver: str
     settings: dict = {}
     enabled: bool = True
 
@@ -62,7 +62,7 @@ class Bucket(BaseModel):
             }
             if "settings" in obj:
                 obj["settings"] = json.loads(obj["settings"])
-        parent = installed_providers.get(obj.get("provider"), cls)
+        parent = installed_drivers.get(obj.get("driver"), cls)
         if parent is cls:
             parent = super()
         return parent.parse_obj(obj)
@@ -89,10 +89,10 @@ async def list_buckets(request: Request, conn=Depends(connection("objects"))):
     rv = [
         dict(
             Bucket.parse_obj(bucket).dict(exclude={"settings"}),
-            installed=bucket.provider in installed_providers,
+            installed=bucket.driver in installed_drivers,
             href=request.url_for("get_bucket", bucket_name=bucket.name),
         )
-        for bucket in await conn.fetchall("SELECT Bucket {name, provider, enabled}")
+        for bucket in await conn.fetchall("SELECT Bucket {name, driver, enabled}")
     ]
     return rv
 
@@ -105,16 +105,16 @@ async def create_bucket(
         bucket = Bucket.parse_obj(bucket.dict())
     except ValidationError as e:
         raise HTTPException(HTTP_422_UNPROCESSABLE_ENTITY, e.errors())
-    if not bucket.provider:
+    if not bucket.driver:
         raise HTTPException(
-            HTTP_400_BAD_REQUEST, [dict(loc=["provider"], msg="must not be empty")]
+            HTTP_400_BAD_REQUEST, [dict(loc=["driver"], msg="must not be empty")]
         )
     try:
         rv = await conn.fetchone(
             """
                 INSERT Bucket {
                     name := <str>$name,
-                    provider := <str>$provider,
+                    driver := <str>$driver,
                     settings := to_json(<str>$settings),
                     enabled := <bool>$enabled,
                 }
@@ -131,7 +131,7 @@ async def create_bucket(
 
 async def _get_bucket(bucket_name: str, conn=Depends(connection("objects"))):
     bucket = await conn.fetchall(
-        "SELECT Bucket {name, provider, enabled, settings} FILTER .name = <str>$name",
+        "SELECT Bucket {name, driver, enabled, settings} FILTER .name = <str>$name",
         name=bucket_name,
     )
     if bucket:
@@ -145,7 +145,7 @@ async def get_bucket(request: Request, bucket=Depends(_get_bucket)):
     return dict(
         bucket.dict(),
         href=request.url_for("get_bucket", bucket_name=bucket.name),
-        installed=bucket.provider in installed_providers,
+        installed=bucket.driver in installed_drivers,
     )
 
 
@@ -221,13 +221,13 @@ async def delete_bucket_path(path: str = None, bucket=Depends(_get_bucket)):
 
 
 def load_extras():
-    for ep in pkg_resources.iter_entry_points("gen3.objects.providers"):
+    for ep in pkg_resources.iter_entry_points("gen3.objects.drivers"):
         try:
-            provider = ep.load()
+            driver = ep.load()
         except pkg_resources.DistributionNotFound:  # pragma: no cover
             pass
         else:
-            installed_providers[ep.name] = provider
+            installed_drivers[ep.name] = driver
 
 
 load_extras()
