@@ -3,7 +3,7 @@ import shutil
 from collections import deque
 
 from fastapi import HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Schema
 from starlette.concurrency import run_in_threadpool
 from starlette.responses import FileResponse
 from starlette.status import HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_409_CONFLICT
@@ -15,7 +15,7 @@ BUFFER_SIZE = 65536
 
 
 class FileSystemSettings(BaseModel):
-    root_dir: str
+    root_dir: str = Schema(..., title="Root Directory")
 
 
 class FileSystemBucket(Bucket):

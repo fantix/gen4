@@ -1,15 +1,18 @@
 import json
+import typing
 
 import edgedb
 import pkg_resources
 from fastapi import Depends, HTTPException, UploadFile, File
-from pydantic import BaseModel, Schema
+from pydantic import BaseModel, Schema, ValidationError
 from starlette.requests import Request
 from starlette.responses import Response
 from starlette.status import (
     HTTP_201_CREATED,
     HTTP_204_NO_CONTENT,
+    HTTP_400_BAD_REQUEST,
     HTTP_404_NOT_FOUND,
+    HTTP_409_CONFLICT,
     HTTP_422_UNPROCESSABLE_ENTITY,
 )
 
@@ -34,7 +37,13 @@ installed_providers = {}
 
 @mod.get("/providers")
 def get_providers():
-    return {key: provider.__doc__ for key, provider in installed_providers.items()}
+    return {
+        key: dict(
+            desc=provider.__doc__,
+            settings=typing.get_type_hints(provider)["settings"].schema(),
+        )
+        for key, provider in installed_providers.items()
+    }
 
 
 class Bucket(BaseModel):
@@ -45,7 +54,6 @@ class Bucket(BaseModel):
 
     @classmethod
     def parse_obj(cls, obj):
-        parent = super()
         if isinstance(obj, edgedb.Object):
             obj = {
                 key: getattr(obj, key)
@@ -54,7 +62,9 @@ class Bucket(BaseModel):
             }
             if "settings" in obj:
                 obj["settings"] = json.loads(obj["settings"])
-            parent = installed_providers.get(obj.get("provider"), parent)
+        parent = installed_providers.get(obj.get("provider"), cls)
+        if parent is cls:
+            parent = super()
         return parent.parse_obj(obj)
 
     def dict(self, dump_json=False, **kwargs):
@@ -91,20 +101,32 @@ async def list_buckets(request: Request, conn=Depends(connection("objects"))):
 async def create_bucket(
     bucket: Bucket, request: Request, conn=Depends(connection("objects"))
 ):
-    rv = await conn.fetchone(
-        """
-            INSERT Bucket {
-                name := <str>$name,
-                provider := <str>$provider,
-                settings := to_json(<str>$settings),
-                enabled := <bool>$enabled,
-            }
-            """,
-        **bucket.dict(dump_json=True),
-    )
-    return dict(
-        id=str(rv.id), href=request.url_for("get_bucket", bucket_name=bucket.name)
-    )
+    try:
+        bucket = Bucket.parse_obj(bucket.dict())
+    except ValidationError as e:
+        raise HTTPException(HTTP_422_UNPROCESSABLE_ENTITY, e.errors())
+    if not bucket.provider:
+        raise HTTPException(
+            HTTP_400_BAD_REQUEST, [dict(loc=["provider"], msg="must not be empty")]
+        )
+    try:
+        rv = await conn.fetchone(
+            """
+                INSERT Bucket {
+                    name := <str>$name,
+                    provider := <str>$provider,
+                    settings := to_json(<str>$settings),
+                    enabled := <bool>$enabled,
+                }
+                """,
+            **bucket.dict(dump_json=True),
+        )
+    except edgedb.ConstraintViolationError as e:
+        raise HTTPException(HTTP_409_CONFLICT, [dict(loc=["name"], msg=str(e))])
+    else:
+        return dict(
+            id=str(rv.id), href=request.url_for("get_bucket", bucket_name=bucket.name)
+        )
 
 
 async def _get_bucket(bucket_name: str, conn=Depends(connection("objects"))):
@@ -121,7 +143,9 @@ async def _get_bucket(bucket_name: str, conn=Depends(connection("objects"))):
 @mod.get("/buckets/{bucket_name}")
 async def get_bucket(request: Request, bucket=Depends(_get_bucket)):
     return dict(
-        bucket.dict(), href=request.url_for("get_bucket", bucket_name=bucket.name)
+        bucket.dict(),
+        href=request.url_for("get_bucket", bucket_name=bucket.name),
+        installed=bucket.provider in installed_providers,
     )
 
 
