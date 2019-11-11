@@ -11,16 +11,21 @@
             </v-combobox>
           </v-toolbar>
           <v-divider></v-divider>
-          <v-toolbar color="white" flat dense>
-            <v-btn @click="goUp" depressed small><v-icon>mdi-arrow-up-bold</v-icon></v-btn>
+          <v-toolbar color="white" dense flat>
+            <v-btn @click="goUp" depressed small>
+              <v-icon>mdi-arrow-up-bold</v-icon>
+            </v-btn>
           </v-toolbar>
           <v-data-table
+              class="gen3-table"
               :headers="headers"
               :items="files"
               :items-per-page="15"
               @click:row="clicked"
-              dense>
-
+              dense
+              item-key="name"
+              single-select
+              v-model="selected">
             <template v-slot:item.dir="{ item }">
               <v-icon>{{ item.dir ? 'mdi-folder-open' : 'mdi-file-outline'}}</v-icon>
             </template>
@@ -40,11 +45,13 @@
 <script>
     export default {
         name: "Files",
+        clickTime: 0,
         data: () => ({
             bucket: null,
             buckets: [],
             files: [],
             path: [],
+            selected: [],
             headers: [
                 {text: '', value: 'dir', width: 1},
                 {text: 'Name', value: 'name'},
@@ -60,18 +67,26 @@
                 let resp = await this.$axios.get(`/api/objects/buckets/${val}/?recursive=false`)
                 this.files = resp.data
             },
+            selected(val) {
+            }
         },
         methods: {
             async clicked(row) {
-                if (row.dir) {
-                    this.path.push(row.name)
-                    try {
-                        let resp = await this.$axios.get(`/api/objects/buckets/${this.bucket}/${this.path.join('/')}?recursive=false`)
-                        this.files = resp.data
-                    } catch (e) {
-                        this.path.pop()
+                let now = Date.now()
+                if (this.selected[0] === row && now - this.clickTime < 500) {
+                    this.clickTime = 0
+                    if (row.dir) {
+                        this.path.push(row.name)
+                        try {
+                            let resp = await this.$axios.get(`/api/objects/buckets/${this.bucket}/${this.path.join('/')}?recursive=false`)
+                            this.files = resp.data
+                        } catch (e) {
+                            this.path.pop()
+                        }
                     }
                 }
+                this.clickTime = now
+                this.selected = [row]
             },
             async goUp() {
                 if (this.path) {
@@ -88,6 +103,12 @@
     }
 </script>
 
-<style scoped>
+<style>
+  .gen3-table.v-data-table tbody tr.v-data-table__selected {
+    background-color: var(--v-accent2-lighten3);
+  }
 
+  .gen3-table.v-data-table tbody tr:hover:not(.v-data-table__expanded__content) {
+    background-color: var(--v-secondary-lighten3);
+  }
 </style>
