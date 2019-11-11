@@ -7,6 +7,14 @@ python-versions = "*"
 version = "0.4.0"
 
 [[package]]
+category = "main"
+description = "ftp client/server for asyncio"
+name = "aioftp"
+optional = false
+python-versions = ">= 3.5.3"
+version = "0.13.0"
+
+[[package]]
 category = "dev"
 description = "Atomic file writes."
 name = "atomicwrites"
@@ -374,11 +382,12 @@ more-itertools = "*"
 server = ["aiofiles", "fastapi", "edgedb", "email-validator", "pypfb", "python-multipart", "uvicorn"]
 
 [metadata]
-content-hash = "765a5bc656b31466c9e290e9bff34f8c8063e6aeb331e347b9155556386c5ca9"
+content-hash = "6426a48c1ba8a9c93cfc6d85102ff64e715c6efbc576dd69b5b252ec5bcbb45f"
 python-versions = "^3.7"
 
 [metadata.hashes]
 aiofiles = ["021ea0ba314a86027c166ecc4b4c07f2d40fc0f4b3a950d1868a0f2571c2bbee", "1e644c2573f953664368de28d2aa4c89dfd64550429d0c27c4680ccd3aa4985d"]
+aioftp = ["11b5fab43a40f08452e320bc764275c793a63bc0ddd59df80376254da8715dd5", "5711c03433b510c101e9337069033133cca19b508b5162b414bed24320de6c18"]
 atomicwrites = ["03472c30eb2c5d1ba9227e4c2ca66ab8287fbfbbda3888aa93dc2e28fc6811b4", "75a9445bac02d8d058d5e1fe689654ba5a6556a1dfd8ce6ec55a0ed79866cfa6"]
 attrs = ["08a96c641c3a74e44eb59afb61a24f2cb9f4d7188748e76ba4bb5edfa3cb7d1c", "f7b7ce16570fe9965acd6d30101a28f62fb4a7f9e926b3bbc9b61f8b04247e72"]
 certifi = ["e4f3620cfea4f83eedc95b24abd9cd56f3c4b146dd0177e83a21b4eb49e21e50", "fd7c7c74727ddcf00e9acd26bba8da604ffec95bf1c2144e67aff7a8b50e6cef"]
