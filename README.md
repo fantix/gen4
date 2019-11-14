@@ -27,6 +27,11 @@ during `make`, and you must activate it by:
 poetry shell
 ```
 
+Optional requirements:
+
+* [libmagic](https://www.darwinsys.com/file/)
+  ([macOS](https://formulae.brew.sh/formula/libmagic)) for file type guessing
+
 
 ## Development
 

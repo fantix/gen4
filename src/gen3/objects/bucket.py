@@ -1,7 +1,13 @@
 import json
+import mimetypes
 import typing
 
 import edgedb
+
+try:
+    import magic
+except ImportError:
+    magic = None
 import pkg_resources
 from fastapi import Depends, HTTPException, UploadFile, File
 from pydantic import BaseModel, Schema, ValidationError
@@ -74,7 +80,36 @@ class Bucket(BaseModel):
                 rv["settings"] = json.dumps(rv["settings"])
         return rv
 
+    @staticmethod
+    def guess_type(path=None, data=None):
+        ext_mime = mimetypes.guess_type(path, False)[0]
+        mime = type_ = None
+        if magic:
+            if data:
+                type_ = magic.from_buffer(data)
+                mime = magic.from_buffer(data, mime=True)
+            else:
+                try:
+                    type_ = magic.from_file(path)
+                    mime = magic.from_file(path, mime=True)
+                except OSError:
+                    pass
+        if (
+            mime
+            in [None, "text/plain", "application/x-empty", "application/octet-stream"]
+            and ext_mime
+        ):
+            mime = ext_mime
+        if not mime:
+            mime = "unknown"
+        if not type_:
+            type_ = mime
+        return mime, type_
+
     async def get(self, path, recursive=True):  # pragma: no cover
+        raise NotImplementedError
+
+    async def download(self, path):
         raise NotImplementedError
 
     async def put(self, path, file):  # pragma: no cover
@@ -202,9 +237,17 @@ async def delete_bucket(
 
 @mod.get("/buckets/{bucket_name}/{path:path}")
 async def get_bucket_path(
-    path: str = None, bucket=Depends(_get_bucket), recursive: bool = True
+    request: Request,
+    path: str = None,
+    bucket=Depends(_get_bucket),
+    recursive: bool = True,
+    download: bool = False,
 ):
-    return await bucket.get(path, recursive=recursive)
+    request.scope.get('add_close_watcher', lambda: None)()
+    if download:
+        return await bucket.download(path)
+    else:
+        return await bucket.get(path, recursive=recursive)
 
 
 @mod.put("/buckets/{bucket_name}/{path:path}")

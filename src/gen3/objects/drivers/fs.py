@@ -1,5 +1,7 @@
+import mimetypes
 import os
 import shutil
+import stat
 from collections import deque
 
 from fastapi import HTTPException
@@ -37,23 +39,27 @@ class FileSystemBucket(Bucket):
             target = self._get_target(path)
             if not os.path.exists(target):
                 raise HTTPException(HTTP_404_NOT_FOUND)
-            elif os.path.isdir(target):
-                rv = []
+
+            st = os.stat(target)
+            if stat.S_ISDIR(st.st_mode):
+                files = []
+                type_ = "Directory"
+                mime = "inode/directory"
+                preview = None
                 q = deque([iter(os.scandir(target))])
                 while q:
                     it = q[-1]
                     try:
                         while True:
                             entry = next(it)
-                            stat = entry.stat()
-                            rv.append(
+                            e_st = entry.stat()
+                            files.append(
                                 dict(
-                                    name=os.path.relpath(
-                                        entry.path, target
-                                    ),
+                                    name=os.path.relpath(entry.path, target),
                                     dir=entry.is_dir(),
-                                    size=stat.st_size,
-                                    mtime=stat.st_mtime,
+                                    size=e_st.st_size,
+                                    mtime=e_st.st_mtime,
+                                    mime=mimetypes.guess_type(entry.path, False)[0],
                                 )
                             )
                             if recursive and entry.is_dir(follow_symlinks=False):
@@ -63,7 +69,38 @@ class FileSystemBucket(Bucket):
                         q.pop()
                     except PermissionError as e:
                         logger.warning(e)
-                return rv
+            else:
+                files = preview = None
+                mime, type_ = self.guess_type(target)
+                # noinspection PyBroadException
+                try:
+                    with open(target) as f:
+                        preview = f.read(1024)
+                except Exception:
+                    pass
+
+            return dict(
+                name=path,
+                dir=stat.S_ISDIR(st.st_mode),
+                size=st.st_size,
+                mtime=st.st_mtime,
+                type=type_,
+                mime=mime,
+                files=files,
+                preview=preview,
+            )
+
+        return await run_in_threadpool(_get)
+
+    async def download(self, path):
+        def _get():
+            target = self._get_target(path)
+            if not os.path.exists(target):
+                raise HTTPException(HTTP_404_NOT_FOUND)
+            elif os.path.isdir(target):
+                raise HTTPException(
+                    HTTP_400_BAD_REQUEST, "folder download not supported"
+                )
             else:
                 return FileResponse(target)
 

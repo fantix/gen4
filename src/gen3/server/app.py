@@ -112,6 +112,42 @@ class Transaction(edgedb.transaction.AsyncIOTransaction):
         raise _Rollback()
 
 
+class ClientDisconnectMiddleware:
+    def __init__(self, app_):
+        self._app = app_
+
+    async def __call__(self, scope, receive, send):
+        loop = asyncio.get_running_loop()
+        rv = loop.create_task(self._app(scope, receive, send))
+        waiter = None
+        cancelled = False
+        if scope["type"] == "http":
+
+            def add_close_watcher():
+                nonlocal waiter
+
+                async def wait_closed():
+                    nonlocal cancelled
+                    while True:
+                        message = await receive()
+                        if message["type"] == "http.disconnect":
+                            if not rv.done():
+                                cancelled = True
+                                rv.cancel()
+                            break
+
+                waiter = loop.create_task(wait_closed())
+
+            scope["add_close_watcher"] = add_close_watcher
+        try:
+            await rv
+        except asyncio.CancelledError:
+            if not cancelled:
+                raise
+        if waiter and not waiter.done():
+            waiter.cancel()
+
+
 @app.on_event("startup")
 async def create_db_pool():
     args = dict(
@@ -178,6 +214,8 @@ def connection(module=None):
 
 
 def load_extras():
+    app.add_middleware(ClientDisconnectMiddleware)
+
     if config.SERVER_WEB_DIR:
         msg = "Serving Web files from: "
         logger.info(

@@ -1,8 +1,11 @@
 import asyncio
+import mimetypes
 import os
+import socket
 
 import aioftp
 from pydantic import BaseModel
+from starlette.concurrency import run_in_threadpool
 
 from ..bucket import Bucket
 from ...server.app import app
@@ -31,20 +34,57 @@ class FtpBucket(Bucket):
             _cache[self.name] = CachedFtpServer(self)
         async with _cache[self.name] as client:
             full_path = os.path.join(self.settings.path, path)
-            if await client.is_dir(full_path):
-                rv = []
+            stat = await client.stat(full_path)
+            preview = files = None
+            if stat["type"] == "dir":
+                type_ = "Directory"
+                mime = "inode/directory"
+                files = []
                 async for item, props in client.list(full_path, recursive=recursive):
-                    rv.append(
+                    files.append(
                         dict(
                             name=str(item.relative_to(full_path)),
                             dir=props["type"] == "dir",
                             size=props.get("size", 0),
                             mtime=props["modify"],
+                            mime=mimetypes.guess_type(str(item), False)[0],
                         )
                     )
-                return rv
             else:
-                pass
+                await client.command("TYPE I", "200")
+                ip, port = await client._do_epsv()
+                if ip in ("0.0.0.0", None):
+                    ip = client.server_host
+
+                def get_bytes():
+                    s = socket.create_connection((ip, port), timeout=1)
+                    buf = s.recv(1024)
+                    s.close()
+                    # noinspection PyBroadException
+                    try:
+                        preview_ = buf.decode()
+                    except Exception:
+                        preview_ = None
+                    return self.guess_type(full_path, buf), preview_
+
+                fut = asyncio.ensure_future(run_in_threadpool(get_bytes))
+                await client.command(f"RETR {full_path}", "1xx")
+                (mime, type_), preview = await fut
+                await client.command(None, ["2xx", "451"], "1xx")
+
+            return dict(
+                name=path,
+                dir=stat["type"] == "dir",
+                size=stat.get("size", 0),
+                mtime=stat["modify"],
+                type=type_,
+                mime=mime,
+                files=files,
+                preview=preview,
+            )
+
+    async def download(self, path):
+        pass
 
     async def put(self, path, file):
         pass
@@ -80,19 +120,28 @@ class CachedFtpServer:
                 )
             return client
         except Exception:
-            await client.close()
+            client.close()
             self._lock.release()
             raise
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         self._lock.release()
+        if exc_val is not None:
+            await self.close()
 
     async def close(self):
-        if self._expire is not None:
-            self._expire.cancel()
-            self._expire = None
-        _cache.pop(self._name, None)
-        await self._client.quit()
+        async with self._lock:
+            client, self._client = self._client, None
+            if self._expire is not None:
+                self._expire.cancel()
+                self._expire = None
+            _cache.pop(self._name, None)
+            if client:
+                # noinspection PyBroadException
+                try:
+                    await asyncio.wait_for(client.quit(), 0.1)
+                except Exception:
+                    pass
 
 
 @app.on_event("shutdown")
