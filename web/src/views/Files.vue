@@ -14,7 +14,7 @@
             <v-divider></v-divider>
             <v-toolbar color="white" dense flat>
               <v-btn @click="goUp" depressed small>
-                <v-icon>mdi-arrow-up-bold</v-icon>
+                <v-img src="../assets/go-parent-folder.svg"></v-img>
               </v-btn>
             </v-toolbar>
             <v-data-table
