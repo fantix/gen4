@@ -1,0 +1,121 @@
+---
+- hosts: all
+  tasks:
+    - name: EdgeDB APT Key
+      become: yes
+      apt_key:
+        url: https://packages.edgedb.com/keys/edgedb.asc
+        state: present
+    - name: EdgeDB repository
+      become: yes
+      apt_repository:
+        repo: deb https://packages.edgedb.com/apt bionic main
+        state: present
+        update_cache: yes
+    - name: EdgeDB Server
+      become: yes
+      apt:
+        name: edgedb-1-alpha1
+        state: present
+    - name: EdgeDB Service
+      become: yes
+      service:
+        name: edgedb-1-alpha1
+        state: started
+        enabled: yes
+    - name: EdgeDB password
+      become: yes
+      become_user: edgedb
+      command: edgedb --admin alter role edgedb --password-from-stdin
+      args:
+        stdin: edgedb
+    - name: Node.js
+      become: yes
+      snap:
+        name: node
+        classic: yes
+        channel: '13'
+    - name: Python 3.7
+      become: yes
+      apt:
+        name: python3.7-dev
+        state: present
+    - name: Pip
+      become: yes
+      apt:
+        name: python3-pip
+        state: present
+    - name: pip3.7
+      become: yes
+      copy:
+        dest: '/usr/local/bin/pip3.7'
+        mode: +x
+        content: |
+          #!/usr/bin/python3.7
+          import sys
+          from pip import main
+          if __name__ == '__main__':
+              sys.exit(main())
+    - name: Python 3.7 virtualenv
+      become: yes
+      apt:
+        name: python3.7-venv
+        state: present
+    - name: Poetry
+      become: yes
+      pip:
+        name: poetry
+        executable: /usr/local/bin/pip3.7
+    - name: User
+      become: yes
+      user:
+        name: gen3
+    - name: Source directory
+      become: yes
+      file:
+        path: /src
+        state: directory
+        owner: gen3
+    - name: Source from GitHub
+      become: yes
+      become_user: gen3
+      git:
+        repo: 'https://github.com/fantix/gen4.git'
+        dest: /src/
+    - name: Installation
+      become: yes
+      pip:
+        name: /src/dist/gen3-3.1.0-py3-none-any.whl[server]
+        executable: /usr/local/bin/pip3.7
+    - name: Service
+      become: yes
+      copy:
+        dest: '/lib/systemd/system/gen3.service'
+        content: |
+          [Unit]
+          Description=Gen3 server.
+          Documentation=https://gen3.org/
+          After=syslog.target
+          After=network.target
+
+          [Service]
+          User=gen3
+          Group=gen3
+
+          Environment=DB_USER=edgedb
+          Environment=DB_PASSWORD=edgedb
+          Environment=SERVER_WEB_DIR=/usr/local/lib/python3.7/dist-packages/gen3/server/static
+
+          ExecStart=/usr/bin/python3.7 /usr/bin/gunicorn3 -w 4 -k uvicorn.workers.UvicornWorker gen3.server.app:app
+          ExecReload=/bin/kill -HUP ${MAINPID}
+          TimeoutSec=8
+
+          [Install]
+          WantedBy=multi-user.target
+    - name: Restart Gen3
+      become: yes
+      systemd:
+        state: restarted
+        daemon_reload: yes
+        name: gen3
+        enabled: yes
