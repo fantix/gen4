@@ -26,7 +26,7 @@ edgedb = {version = "^0.6.1", optional = true}
 pypfb = {version = "^0.2.0", optional = true}
 python-multipart = {version = "^0.0.5", optional = true}
 aiofiles = {version = "^0.4.0", optional = true}
-aioftp = "^0.13.0"
+aioftp = "^0.17.2"
 python-magic = "^0.4.15"
 
 [tool.poetry.dev-dependencies]
